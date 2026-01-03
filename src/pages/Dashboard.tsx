@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Users, DollarSign, Calendar, FileText, TrendingUp, Clock, CheckCircle, XCircle } from 'lucide-react';
+import { Users, IndianRupee, Calendar, FileText, TrendingUp, Clock, CheckCircle, XCircle } from 'lucide-react';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { StatCard } from '@/components/ui/stat-card';
 import { StatusBadge } from '@/components/ui/status-badge';
@@ -15,16 +15,16 @@ import {
 } from '@/components/ui/select';
 
 const recentLeaveRequests = [
-  { id: '1', employee: 'John Smith', type: 'Vacation', dates: 'Jan 15 - Jan 20', status: 'pending' as const, remainingAnnual: 12, remainingSick: 8 },
-  { id: '2', employee: 'Emily Davis', type: 'Sick Leave', dates: 'Jan 10', status: 'approved' as const, remainingAnnual: 15, remainingSick: 9 },
-  { id: '3', employee: 'Michael Brown', type: 'Personal', dates: 'Jan 12 - Jan 13', status: 'rejected' as const, remainingAnnual: 8, remainingSick: 6 },
-  { id: '4', employee: 'Sarah Wilson', type: 'Vacation', dates: 'Jan 22 - Jan 25', status: 'pending' as const, remainingAnnual: 18, remainingSick: 10 },
-  { id: '5', employee: 'David Lee', type: 'Sick Leave', dates: 'Jan 8 - Jan 9', status: 'approved' as const, remainingAnnual: 5, remainingSick: 1 },
+  { id: '1', employee: 'Rahul Sharma', type: 'Vacation', dates: 'Jan 15 - Jan 20', status: 'pending' as const, remainingAnnual: 12, remainingSick: 8 },
+  { id: '2', employee: 'Priya Patel', type: 'Sick Leave', dates: 'Jan 10', status: 'approved' as const, remainingAnnual: 15, remainingSick: 9 },
+  { id: '3', employee: 'Amit Kumar', type: 'Personal', dates: 'Jan 12 - Jan 13', status: 'rejected' as const, remainingAnnual: 8, remainingSick: 6 },
+  { id: '4', employee: 'Neha Singh', type: 'Vacation', dates: 'Jan 22 - Jan 25', status: 'pending' as const, remainingAnnual: 18, remainingSick: 10 },
+  { id: '5', employee: 'Vikram Reddy', type: 'Sick Leave', dates: 'Jan 8 - Jan 9', status: 'approved' as const, remainingAnnual: 5, remainingSick: 1 },
 ];
 
 const upcomingPayroll = [
-  { id: '1', period: 'January 2024', employees: 156, amount: '$425,000', status: 'Processing' },
-  { id: '2', period: 'December 2023', employees: 154, amount: '$418,500', status: 'Completed' },
+  { id: '1', period: 'January 2024', employees: 24, amount: '₹12,50,000', status: 'Processing' },
+  { id: '2', period: 'December 2023', employees: 24, amount: '₹12,25,000', status: 'Completed' },
 ];
 
 export default function Dashboard() {
@@ -52,16 +52,16 @@ export default function Dashboard() {
           <>
             <StatCard
               title="Total Employees"
-              value="156"
-              subtitle="12 new this month"
+              value="24"
+              subtitle="2 new this month"
               icon={Users}
               trend={{ value: 8.2, isPositive: true }}
             />
             <StatCard
               title="Monthly Payroll"
-              value="$425,000"
+              value="₹12,50,000"
               subtitle="Due in 5 days"
-              icon={DollarSign}
+              icon={IndianRupee}
               iconClassName="bg-success/10 text-success"
               trend={{ value: 3.1, isPositive: true }}
             />
@@ -91,9 +91,9 @@ export default function Dashboard() {
             />
             <StatCard
               title="This Month Salary"
-              value="$5,200"
-              subtitle="Paid on Jan 25"
-              icon={DollarSign}
+              value="₹52,000"
+              subtitle="Paid on 25th"
+              icon={IndianRupee}
               iconClassName="bg-success/10 text-success"
             />
             <StatCard
@@ -203,7 +203,7 @@ export default function Dashboard() {
                   </div>
                 </Button>
                 <Button variant="outline" className="justify-start h-auto py-4">
-                  <DollarSign className="h-5 w-5 mr-3 text-success" />
+                  <IndianRupee className="h-5 w-5 mr-3 text-success" />
                   <div className="text-left">
                     <p className="font-medium">Run Payroll</p>
                     <p className="text-xs text-muted-foreground">Process monthly payroll</p>

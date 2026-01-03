@@ -35,12 +35,12 @@ interface AttendanceRecord {
 }
 
 const attendanceRecords: AttendanceRecord[] = [
-  { id: '1', employee: 'John Smith', date: 'Jan 3, 2024', checkIn: '09:02 AM', checkOut: '06:15 PM', workHours: '9h 13m', status: 'present' },
-  { id: '2', employee: 'Emily Davis', date: 'Jan 3, 2024', checkIn: '08:55 AM', checkOut: '05:30 PM', workHours: '8h 35m', status: 'present' },
-  { id: '3', employee: 'Michael Brown', date: 'Jan 3, 2024', checkIn: '10:20 AM', checkOut: '06:45 PM', workHours: '8h 25m', status: 'late' },
-  { id: '4', employee: 'Sarah Wilson', date: 'Jan 3, 2024', checkIn: '-', checkOut: '-', workHours: '-', status: 'absent' },
-  { id: '5', employee: 'David Lee', date: 'Jan 3, 2024', checkIn: '09:00 AM', checkOut: '01:00 PM', workHours: '4h 0m', status: 'half-day' },
-  { id: '6', employee: 'Jennifer Martinez', date: 'Jan 3, 2024', checkIn: '08:45 AM', checkOut: '05:50 PM', workHours: '9h 5m', status: 'present' },
+  { id: '1', employee: 'Rahul Sharma', date: 'Jan 3, 2024', checkIn: '09:02 AM', checkOut: '06:15 PM', workHours: '9h 13m', status: 'present' },
+  { id: '2', employee: 'Priya Patel', date: 'Jan 3, 2024', checkIn: '08:55 AM', checkOut: '05:30 PM', workHours: '8h 35m', status: 'present' },
+  { id: '3', employee: 'Amit Kumar', date: 'Jan 3, 2024', checkIn: '10:20 AM', checkOut: '06:45 PM', workHours: '8h 25m', status: 'late' },
+  { id: '4', employee: 'Neha Singh', date: 'Jan 3, 2024', checkIn: '-', checkOut: '-', workHours: '-', status: 'absent' },
+  { id: '5', employee: 'Vikram Reddy', date: 'Jan 3, 2024', checkIn: '09:00 AM', checkOut: '01:00 PM', workHours: '4h 0m', status: 'half-day' },
+  { id: '6', employee: 'Anjali Gupta', date: 'Jan 3, 2024', checkIn: '08:45 AM', checkOut: '05:50 PM', workHours: '9h 5m', status: 'present' },
 ];
 
 const statusStyles = {
@@ -59,7 +59,7 @@ export default function Attendance() {
   const [checkInTime, setCheckInTime] = useState<string | null>(null);
   const [isManualEntryOpen, setIsManualEntryOpen] = useState(false);
 
-  const myAttendance = attendanceRecords.filter(r => r.employee === 'John Smith');
+  const myAttendance = attendanceRecords.filter(r => r.employee === 'Rahul Sharma');
   const displayRecords = isHR ? attendanceRecords : myAttendance;
 
   const handleCheckIn = () => {
@@ -130,21 +130,21 @@ export default function Attendance() {
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4 mb-8">
         <StatCard
           title={isHR ? "Present Today" : "Days Present"}
-          value={isHR ? "147" : "22"}
-          subtitle={isHR ? "Out of 156 employees" : "This month"}
+          value={isHR ? "21" : "22"}
+          subtitle={isHR ? "Out of 24 employees" : "This month"}
           icon={CheckCircle2}
           iconClassName="bg-success/10 text-success"
         />
         <StatCard
           title={isHR ? "Absent Today" : "Days Absent"}
-          value={isHR ? "5" : "0"}
-          subtitle={isHR ? "3 on leave, 2 unexcused" : "This month"}
+          value={isHR ? "2" : "0"}
+          subtitle={isHR ? "1 on leave, 1 unexcused" : "This month"}
           icon={XCircle}
           iconClassName="bg-destructive/10 text-destructive"
         />
         <StatCard
           title={isHR ? "Late Arrivals" : "Late Arrivals"}
-          value={isHR ? "4" : "2"}
+          value={isHR ? "1" : "2"}
           subtitle={isHR ? "After 9:30 AM" : "This month"}
           icon={Clock}
           iconClassName="bg-warning/10 text-warning"
@@ -209,12 +209,12 @@ export default function Attendance() {
                         <SelectValue placeholder="Select employee" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="john">John Smith</SelectItem>
-                        <SelectItem value="emily">Emily Davis</SelectItem>
-                        <SelectItem value="michael">Michael Brown</SelectItem>
-                        <SelectItem value="sarah">Sarah Wilson</SelectItem>
-                        <SelectItem value="david">David Lee</SelectItem>
-                        <SelectItem value="jennifer">Jennifer Martinez</SelectItem>
+                        <SelectItem value="rahul">Rahul Sharma</SelectItem>
+                        <SelectItem value="priya">Priya Patel</SelectItem>
+                        <SelectItem value="amit">Amit Kumar</SelectItem>
+                        <SelectItem value="neha">Neha Singh</SelectItem>
+                        <SelectItem value="vikram">Vikram Reddy</SelectItem>
+                        <SelectItem value="anjali">Anjali Gupta</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>

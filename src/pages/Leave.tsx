@@ -41,11 +41,11 @@ interface LeaveRequest {
 }
 
 const leaveRequests: LeaveRequest[] = [
-  { id: '1', employee: 'John Smith', type: 'Vacation', startDate: 'Jan 15', endDate: 'Jan 20', days: 5, reason: 'Family vacation', status: 'pending', appliedOn: 'Jan 5', remainingAnnualLeave: 12, remainingSickLeave: 8 },
-  { id: '2', employee: 'Emily Davis', type: 'Sick Leave', startDate: 'Jan 10', endDate: 'Jan 10', days: 1, reason: 'Medical appointment', status: 'approved', appliedOn: 'Jan 9', remainingAnnualLeave: 15, remainingSickLeave: 9 },
-  { id: '3', employee: 'Michael Brown', type: 'Personal', startDate: 'Jan 12', endDate: 'Jan 13', days: 2, reason: 'Personal matters', status: 'rejected', appliedOn: 'Jan 8', remainingAnnualLeave: 8, remainingSickLeave: 6 },
-  { id: '4', employee: 'Sarah Wilson', type: 'Vacation', startDate: 'Jan 22', endDate: 'Jan 25', days: 4, reason: 'Travel plans', status: 'pending', appliedOn: 'Jan 10', remainingAnnualLeave: 18, remainingSickLeave: 10 },
-  { id: '5', employee: 'David Lee', type: 'Sick Leave', startDate: 'Jan 8', endDate: 'Jan 9', days: 2, reason: 'Flu', status: 'approved', appliedOn: 'Jan 7', remainingAnnualLeave: 5, remainingSickLeave: 1 },
+  { id: '1', employee: 'Rahul Sharma', type: 'Vacation', startDate: 'Jan 15', endDate: 'Jan 20', days: 5, reason: 'Family vacation', status: 'pending', appliedOn: 'Jan 5', remainingAnnualLeave: 12, remainingSickLeave: 8 },
+  { id: '2', employee: 'Priya Patel', type: 'Sick Leave', startDate: 'Jan 10', endDate: 'Jan 10', days: 1, reason: 'Medical appointment', status: 'approved', appliedOn: 'Jan 9', remainingAnnualLeave: 15, remainingSickLeave: 9 },
+  { id: '3', employee: 'Amit Kumar', type: 'Personal', startDate: 'Jan 12', endDate: 'Jan 13', days: 2, reason: 'Personal matters', status: 'rejected', appliedOn: 'Jan 8', remainingAnnualLeave: 8, remainingSickLeave: 6 },
+  { id: '4', employee: 'Neha Singh', type: 'Vacation', startDate: 'Jan 22', endDate: 'Jan 25', days: 4, reason: 'Travel plans', status: 'pending', appliedOn: 'Jan 10', remainingAnnualLeave: 18, remainingSickLeave: 10 },
+  { id: '5', employee: 'Vikram Reddy', type: 'Sick Leave', startDate: 'Jan 8', endDate: 'Jan 9', days: 2, reason: 'Flu', status: 'approved', appliedOn: 'Jan 7', remainingAnnualLeave: 5, remainingSickLeave: 1 },
 ];
 
 export default function Leave() {
@@ -55,7 +55,7 @@ export default function Leave() {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [statusFilter, setStatusFilter] = useState<string>('all');
 
-  const myLeaves = leaveRequests.filter(r => r.employee === 'John Smith');
+  const myLeaves = leaveRequests.filter(r => r.employee === 'Rahul Sharma');
   const baseRequests = isHR ? leaveRequests : myLeaves;
   const displayRequests = statusFilter === 'all' 
     ? baseRequests 
@@ -112,7 +112,7 @@ export default function Leave() {
             />
             <StatCard
               title="Total Requests"
-              value="156"
+              value="42"
               subtitle="This year"
               icon={FileText}
             />
