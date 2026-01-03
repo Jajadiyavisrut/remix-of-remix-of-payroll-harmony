@@ -148,14 +148,11 @@ export default function Login() {
             </Button>
           </form>
 
-          <div className="mt-6 text-center">
-            <p className="text-muted-foreground">
-              Don't have an account?{' '}
-              <Link to="/signup" className="text-primary hover:underline font-medium">
-                Sign up
-              </Link>
-            </p>
-          </div>
+           <div className="mt-6 text-center">
+             <p className="text-sm text-muted-foreground">
+               Need an account? Contact your HR admin to create one for you.
+             </p>
+           </div>
         </div>
       </div>
     </div>

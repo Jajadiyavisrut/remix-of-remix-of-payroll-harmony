@@ -160,74 +160,72 @@ export default function Leave() {
           </Select>
         </div>
         
-        {!isHR && (
-          <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-            <DialogTrigger asChild>
-              <Button>
-                <Plus className="h-4 w-4 mr-2" />
-                Request Leave
-              </Button>
-            </DialogTrigger>
-            <DialogContent className="sm:max-w-md">
-              <DialogHeader>
-                <DialogTitle>Request Leave</DialogTitle>
-                <DialogDescription>
-                  Submit a new leave request for approval.
-                </DialogDescription>
-              </DialogHeader>
-              <div className="grid gap-4 py-4">
+        <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+          <DialogTrigger asChild>
+            <Button>
+              <Plus className="h-4 w-4 mr-2" />
+              Request Leave
+            </Button>
+          </DialogTrigger>
+          <DialogContent className="sm:max-w-md">
+            <DialogHeader>
+              <DialogTitle>Request Leave</DialogTitle>
+              <DialogDescription>
+                Submit a new leave request for approval.
+              </DialogDescription>
+            </DialogHeader>
+            <div className="grid gap-4 py-4">
+              <div className="space-y-2">
+                <Label>Leave Type</Label>
+                <Select value={newRequest.leave_type} onValueChange={(v) => setNewRequest({ ...newRequest, leave_type: v })}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select type" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="Vacation">Vacation</SelectItem>
+                    <SelectItem value="Sick Leave">Sick Leave</SelectItem>
+                    <SelectItem value="Personal">Personal</SelectItem>
+                    <SelectItem value="Maternity/Paternity">Maternity/Paternity</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label>Leave Type</Label>
-                  <Select value={newRequest.leave_type} onValueChange={(v) => setNewRequest({...newRequest, leave_type: v})}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select type" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="Vacation">Vacation</SelectItem>
-                      <SelectItem value="Sick Leave">Sick Leave</SelectItem>
-                      <SelectItem value="Personal">Personal</SelectItem>
-                      <SelectItem value="Maternity/Paternity">Maternity/Paternity</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label>Start Date</Label>
-                    <Input 
-                      type="date" 
-                      value={newRequest.start_date}
-                      onChange={(e) => setNewRequest({...newRequest, start_date: e.target.value})}
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label>End Date</Label>
-                    <Input 
-                      type="date" 
-                      value={newRequest.end_date}
-                      onChange={(e) => setNewRequest({...newRequest, end_date: e.target.value})}
-                    />
-                  </div>
+                  <Label>Start Date</Label>
+                  <Input
+                    type="date"
+                    value={newRequest.start_date}
+                    onChange={(e) => setNewRequest({ ...newRequest, start_date: e.target.value })}
+                  />
                 </div>
                 <div className="space-y-2">
-                  <Label>Reason</Label>
-                  <Textarea 
-                    placeholder="Briefly describe the reason for your leave..."
-                    value={newRequest.reason}
-                    onChange={(e) => setNewRequest({...newRequest, reason: e.target.value})}
+                  <Label>End Date</Label>
+                  <Input
+                    type="date"
+                    value={newRequest.end_date}
+                    onChange={(e) => setNewRequest({ ...newRequest, end_date: e.target.value })}
                   />
                 </div>
               </div>
-              <div className="flex justify-end gap-3">
-                <Button variant="outline" onClick={() => setIsDialogOpen(false)}>
-                  Cancel
-                </Button>
-                <Button onClick={handleSubmitRequest} disabled={createLeave.isPending}>
-                  {createLeave.isPending ? 'Submitting...' : 'Submit Request'}
-                </Button>
+              <div className="space-y-2">
+                <Label>Reason</Label>
+                <Textarea
+                  placeholder="Briefly describe the reason for your leave..."
+                  value={newRequest.reason}
+                  onChange={(e) => setNewRequest({ ...newRequest, reason: e.target.value })}
+                />
               </div>
-            </DialogContent>
-          </Dialog>
-        )}
+            </div>
+            <div className="flex justify-end gap-3">
+              <Button variant="outline" onClick={() => setIsDialogOpen(false)}>
+                Cancel
+              </Button>
+              <Button onClick={handleSubmitRequest} disabled={createLeave.isPending}>
+                {createLeave.isPending ? 'Submitting...' : 'Submit Request'}
+              </Button>
+            </div>
+          </DialogContent>
+        </Dialog>
       </div>
 
       {/* Leave Requests Table */}

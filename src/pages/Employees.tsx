@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import { Plus, Search, Filter, MoreHorizontal, Mail, Phone, Clock, LogIn, LogOut } from 'lucide-react';
+import { Plus, Search, Filter, MoreHorizontal, Mail, Phone, Clock } from 'lucide-react';
+import { useQueryClient } from '@tanstack/react-query';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { StatusBadge } from '@/components/ui/status-badge';
 import { Button } from '@/components/ui/button';
@@ -7,6 +8,8 @@ import { Input } from '@/components/ui/input';
 import { Card, CardContent } from '@/components/ui/card';
 import { Checkbox as CheckboxUI } from '@/components/ui/checkbox';
 import { useProfiles } from '@/hooks/useProfiles';
+import { useAuth } from '@/contexts/AuthContext';
+import { useToast } from '@/hooks/use-toast';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { format } from 'date-fns';
 import {
@@ -52,7 +55,14 @@ const getStatusIndicatorColor = (status?: string) => {
 export default function Employees() {
   const [searchQuery, setSearchQuery] = useState('');
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
+  const [isCreating, setIsCreating] = useState(false);
   const [selectedEmployees, setSelectedEmployees] = useState<string[]>([]);
+  const [newEmployee, setNewEmployee] = useState({ full_name: '', email: '', password: '' });
+
+  const queryClient = useQueryClient();
+  const { toast } = useToast();
+  const { user, session } = useAuth();
+  const isHR = user?.role === 'hr';
 
   const { data: employees, isLoading } = useProfiles();
 
@@ -95,30 +105,129 @@ export default function Employees() {
             <Filter className="h-4 w-4" />
           </Button>
         </div>
-        <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
-          <DialogTrigger asChild>
-            <Button>
-              <Plus className="h-4 w-4 mr-2" />
-              + New
-            </Button>
-          </DialogTrigger>
-          <DialogContent className="sm:max-w-md">
-            <DialogHeader>
-              <DialogTitle>Add New Employee</DialogTitle>
-              <DialogDescription>
-                New employees should sign up through the login page. Their profile will be created automatically.
-              </DialogDescription>
-            </DialogHeader>
-            <div className="py-4 text-center text-muted-foreground">
-              <p>Share the signup link with the new employee to get started.</p>
-            </div>
-            <div className="flex justify-end">
-              <Button variant="outline" onClick={() => setIsAddDialogOpen(false)}>
-                Close
+        {isHR && (
+          <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
+            <DialogTrigger asChild>
+              <Button>
+                <Plus className="h-4 w-4 mr-2" />
+                + New
               </Button>
-            </div>
-          </DialogContent>
-        </Dialog>
+            </DialogTrigger>
+            <DialogContent className="sm:max-w-md">
+              <DialogHeader>
+                <DialogTitle>Add New Employee</DialogTitle>
+                <DialogDescription>
+                  Create a login for a new employee (public sign up is disabled).
+                </DialogDescription>
+              </DialogHeader>
+
+              <div className="grid gap-4 py-4">
+                <div className="space-y-2">
+                  <Label htmlFor="full_name">Full name</Label>
+                  <Input
+                    id="full_name"
+                    value={newEmployee.full_name}
+                    onChange={(e) => setNewEmployee((p) => ({ ...p, full_name: e.target.value }))}
+                    placeholder="Employee name"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="email">Email</Label>
+                  <Input
+                    id="email"
+                    type="email"
+                    value={newEmployee.email}
+                    onChange={(e) => setNewEmployee((p) => ({ ...p, email: e.target.value }))}
+                    placeholder="employee@company.com"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="password">Temporary password</Label>
+                  <Input
+                    id="password"
+                    type="text"
+                    value={newEmployee.password}
+                    onChange={(e) => setNewEmployee((p) => ({ ...p, password: e.target.value }))}
+                    placeholder="Set a temporary password"
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    Share these credentials with the employee. They can change password later.
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex justify-end gap-3">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => setIsAddDialogOpen(false)}
+                  disabled={isCreating}
+                >
+                  Cancel
+                </Button>
+                <Button
+                  type="button"
+                  disabled={isCreating || !newEmployee.email || !newEmployee.password || !newEmployee.full_name}
+                  onClick={async () => {
+                    if (!session?.access_token) {
+                      toast({
+                        title: 'Not signed in',
+                        description: 'Please sign in again and try.',
+                        variant: 'destructive',
+                      });
+                      return;
+                    }
+
+                    setIsCreating(true);
+                    try {
+                      const res = await fetch(
+                        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/admin-create-employee`,
+                        {
+                          method: 'POST',
+                          headers: {
+                            'Content-Type': 'application/json',
+                            Authorization: `Bearer ${session.access_token}`,
+                          },
+                          body: JSON.stringify({
+                            email: newEmployee.email,
+                            password: newEmployee.password,
+                            full_name: newEmployee.full_name,
+                          }),
+                        }
+                      );
+
+                      const payload = await res.json().catch(() => ({}));
+                      if (!res.ok) {
+                        throw new Error(payload?.error || 'Failed to create employee');
+                      }
+
+                      toast({
+                        title: 'Employee created',
+                        description: `${newEmployee.full_name} can now log in with the credentials you set.`,
+                      });
+
+                      setIsAddDialogOpen(false);
+                      setNewEmployee({ full_name: '', email: '', password: '' });
+                      queryClient.invalidateQueries({ queryKey: ['profiles'] });
+                    } catch (e: any) {
+                      toast({
+                        title: 'Create failed',
+                        description: e?.message || 'Please try again.',
+                        variant: 'destructive',
+                      });
+                    } finally {
+                      setIsCreating(false);
+                    }
+                  }}
+                >
+                  {isCreating ? 'Creating…' : 'Create'}
+                </Button>
+              </div>
+            </DialogContent>
+          </Dialog>
+        )}
       </div>
 
       {/* Employee Cards Grid */}
