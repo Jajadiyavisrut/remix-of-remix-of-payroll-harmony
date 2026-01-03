@@ -20,16 +20,16 @@ const upcomingPayroll = [
 
 export default function Dashboard() {
   const { user } = useAuth();
-  const isAdmin = user?.role === 'admin';
+  const isHR = user?.role === 'hr';
 
   return (
     <DashboardLayout 
       title={`Welcome back, ${user?.name.split(' ')[0]}`}
-      subtitle={isAdmin ? 'Here\'s what\'s happening with your team today.' : 'Here\'s your overview for today.'}
+      subtitle={isHR ? 'Here\'s what\'s happening with your team today.' : 'Here\'s your overview for today.'}
     >
       {/* Stats Grid */}
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4 mb-8">
-        {isAdmin ? (
+        {isHR ? (
           <>
             <StatCard
               title="Total Employees"
@@ -123,7 +123,7 @@ export default function Dashboard() {
 
         {/* Quick Actions / Payroll Overview */}
         <div className="space-y-6">
-          {isAdmin && (
+          {isHR && (
             <div className="bg-card rounded-xl border border-border p-6">
               <h3 className="text-lg font-semibold mb-4">Quick Actions</h3>
               <div className="grid grid-cols-2 gap-3">

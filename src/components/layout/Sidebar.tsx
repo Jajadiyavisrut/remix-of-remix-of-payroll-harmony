@@ -14,7 +14,7 @@ import { cn } from '@/lib/utils';
 
 const navigation = [
   { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
-  { name: 'Employees', href: '/employees', icon: Users, adminOnly: true },
+  { name: 'Employees', href: '/employees', icon: Users, hrOnly: true },
   { name: 'Attendance', href: '/attendance', icon: Calendar },
   { name: 'Payroll', href: '/payroll', icon: DollarSign },
   { name: 'Leave', href: '/leave', icon: FileText },
@@ -26,7 +26,7 @@ export function Sidebar() {
   const { user, logout } = useAuth();
 
   const filteredNavigation = navigation.filter(
-    item => !item.adminOnly || user?.role === 'admin'
+    item => !item.hrOnly || user?.role === 'hr'
   );
 
   return (
@@ -38,8 +38,8 @@ export function Sidebar() {
             <Building2 className="h-5 w-5 text-primary-foreground" />
           </div>
           <div>
-            <h1 className="text-base font-semibold text-sidebar-foreground">PayrollPro</h1>
-            <p className="text-xs text-muted-foreground">HR Management</p>
+            <h1 className="text-base font-semibold text-sidebar-foreground">Dayflow</h1>
+            <p className="text-xs text-muted-foreground">Every workday, perfectly aligned</p>
           </div>
         </div>
 

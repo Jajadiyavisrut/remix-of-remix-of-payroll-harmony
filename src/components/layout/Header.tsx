@@ -71,9 +71,9 @@ export function Header({ title, subtitle }: HeaderProps) {
             <DropdownMenuLabel className="text-xs text-muted-foreground font-normal">
               Switch Role (Demo)
             </DropdownMenuLabel>
-            <DropdownMenuItem onClick={() => switchRole('admin')}>
-              <Badge variant={user?.role === 'admin' ? 'default' : 'outline'} className="mr-2">
-                Admin
+            <DropdownMenuItem onClick={() => switchRole('hr')}>
+              <Badge variant={user?.role === 'hr' ? 'default' : 'outline'} className="mr-2">
+                HR
               </Badge>
               Full Access
             </DropdownMenuItem>

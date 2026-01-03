@@ -31,7 +31,7 @@ export default function Login() {
       } else {
         toast({
           title: 'Sign in failed',
-          description: 'Invalid email or password. Try admin@company.com',
+          description: 'Invalid email or password. Try hr@company.com',
           variant: 'destructive',
         });
       }
@@ -57,10 +57,10 @@ export default function Login() {
             </div>
           </div>
           <h1 className="text-4xl font-bold text-primary-foreground mb-4">
-            PayrollPro
+            Dayflow
           </h1>
           <p className="text-lg text-primary-foreground/80 mb-8">
-            Streamline your HR operations with our comprehensive employee and payroll management system.
+            Every workday, perfectly aligned. Streamline your HR operations with our comprehensive management system.
           </p>
           <div className="grid grid-cols-2 gap-4 text-left">
             {[
@@ -86,7 +86,7 @@ export default function Login() {
               <div className="h-10 w-10 rounded-xl bg-primary flex items-center justify-center">
                 <Building2 className="h-6 w-6 text-primary-foreground" />
               </div>
-              <span className="text-xl font-semibold">PayrollPro</span>
+              <span className="text-xl font-semibold">Dayflow</span>
             </div>
           </div>
 
@@ -154,7 +154,7 @@ export default function Login() {
           <div className="mt-8 p-4 rounded-lg bg-muted/50 border border-border">
             <p className="text-xs text-muted-foreground text-center mb-2">Demo Credentials</p>
             <div className="text-xs text-center space-y-1">
-              <p><span className="font-medium">Admin:</span> admin@company.com</p>
+              <p><span className="font-medium">HR:</span> hr@company.com</p>
               <p><span className="font-medium">Employee:</span> employee@company.com</p>
               <p className="text-muted-foreground">Password: any 6+ characters</p>
             </div>

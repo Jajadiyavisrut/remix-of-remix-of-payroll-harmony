@@ -21,7 +21,7 @@ const features = [
   {
     icon: Shield,
     title: 'Role-Based Access',
-    description: 'Secure access control with admin and employee roles for data protection.',
+    description: 'Secure access control with HR and employee roles for data protection.',
   },
 ];
 
@@ -35,7 +35,7 @@ export default function Index() {
             <div className="h-9 w-9 rounded-lg bg-primary flex items-center justify-center">
               <Building2 className="h-5 w-5 text-primary-foreground" />
             </div>
-            <span className="text-lg font-semibold">PayrollPro</span>
+            <span className="text-lg font-semibold">Dayflow</span>
           </div>
           <div className="flex items-center gap-4">
             <Link to="/login">
@@ -59,12 +59,11 @@ export default function Index() {
             Modern HR Management Platform
           </div>
           <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-foreground max-w-4xl mx-auto leading-tight">
-            Streamline Your
-            <span className="text-primary"> Employee & Payroll </span>
-            Management
+            Every Workday,
+            <span className="text-primary"> Perfectly Aligned </span>
           </h1>
           <p className="mt-6 text-lg text-muted-foreground max-w-2xl mx-auto">
-            A comprehensive solution for managing employees, processing payroll, tracking attendance, 
+            A comprehensive HR management solution for managing employees, processing payroll, tracking attendance, 
             and handling leave requests — all in one intuitive platform.
           </p>
           <div className="mt-10 flex flex-col sm:flex-row items-center justify-center gap-4">
@@ -117,7 +116,7 @@ export default function Index() {
               Ready to Transform Your HR Operations?
             </h2>
             <p className="text-primary-foreground/80 max-w-xl mx-auto mb-8">
-              Join thousands of companies already using PayrollPro to streamline their employee management.
+              Join thousands of companies already using Dayflow to streamline their employee management.
             </p>
             <Link to="/signup">
               <Button size="lg" variant="secondary" className="h-12 px-8">
@@ -137,10 +136,10 @@ export default function Index() {
               <div className="h-8 w-8 rounded-lg bg-primary flex items-center justify-center">
                 <Building2 className="h-4 w-4 text-primary-foreground" />
               </div>
-              <span className="font-semibold">PayrollPro</span>
+              <span className="font-semibold">Dayflow</span>
             </div>
             <p className="text-sm text-muted-foreground">
-              © 2024 PayrollPro. All rights reserved.
+              © 2024 Dayflow. All rights reserved.
             </p>
           </div>
         </div>

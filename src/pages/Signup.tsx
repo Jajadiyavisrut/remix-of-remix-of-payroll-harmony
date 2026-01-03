@@ -61,10 +61,10 @@ export default function Signup() {
             </div>
           </div>
           <h1 className="text-4xl font-bold text-primary-foreground mb-4">
-            Join PayrollPro
+            Join Dayflow
           </h1>
           <p className="text-lg text-primary-foreground/80 mb-8">
-            Create your account and start managing your workforce efficiently.
+            Every workday, perfectly aligned. Create your account and start managing your workforce efficiently.
           </p>
           <div className="space-y-3 text-left">
             {[
@@ -92,13 +92,13 @@ export default function Signup() {
               <div className="h-10 w-10 rounded-xl bg-primary flex items-center justify-center">
                 <Building2 className="h-6 w-6 text-primary-foreground" />
               </div>
-              <span className="text-xl font-semibold">PayrollPro</span>
+              <span className="text-xl font-semibold">Dayflow</span>
             </div>
           </div>
 
           <div className="text-center mb-8">
             <h2 className="text-2xl font-semibold text-foreground">Create an account</h2>
-            <p className="text-muted-foreground mt-2">Get started with PayrollPro today</p>
+            <p className="text-muted-foreground mt-2">Get started with Dayflow today</p>
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-5">
