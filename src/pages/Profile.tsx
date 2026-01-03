@@ -1,32 +1,86 @@
-import { useState } from 'react';
-import { Mail, Phone, MapPin, Building2, Calendar, Edit2, Save, X } from 'lucide-react';
+import { useState, useRef } from 'react';
+import { Mail, Phone, MapPin, Building2, Calendar, Edit2, Save, X, Camera } from 'lucide-react';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useAuth } from '@/contexts/AuthContext';
-import { useToast } from '@/hooks/use-toast';
+import { useMyProfile, useUpdateProfile, useUploadAvatar } from '@/hooks/useProfiles';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Skeleton } from '@/components/ui/skeleton';
+import { format } from 'date-fns';
 
 export default function Profile() {
-  const { user } = useAuth();
-  const { toast } = useToast();
+  const { user, session } = useAuth();
+  const { data: profile, isLoading } = useMyProfile();
+  const updateProfile = useUpdateProfile();
+  const uploadAvatar = useUploadAvatar();
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  
   const [isEditing, setIsEditing] = useState(false);
   const [formData, setFormData] = useState({
-    name: user?.name || '',
-    email: user?.email || '',
-    phone: '+1 234 567 890',
-    address: '123 Main Street, San Francisco, CA 94102',
-    emergencyContact: 'Jane Smith - +1 234 567 899',
+    full_name: '',
+    email: '',
+    phone: '',
+  });
+
+  // Initialize form data when profile loads
+  useState(() => {
+    if (profile) {
+      setFormData({
+        full_name: profile.full_name || '',
+        email: profile.email || '',
+        phone: profile.phone || '',
+      });
+    }
   });
 
   const handleSave = () => {
-    setIsEditing(false);
-    toast({
-      title: 'Profile Updated',
-      description: 'Your profile has been updated successfully.',
+    if (!session?.user?.id) return;
+    
+    updateProfile.mutate({
+      userId: session.user.id,
+      updates: {
+        full_name: formData.full_name,
+        phone: formData.phone,
+      },
     });
+    setIsEditing(false);
   };
+
+  const handleAvatarClick = () => {
+    fileInputRef.current?.click();
+  };
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      uploadAvatar.mutate(file);
+    }
+  };
+
+  const formatCurrency = (amount: number | null) => {
+    if (!amount) return '-';
+    return new Intl.NumberFormat('en-IN', {
+      style: 'currency',
+      currency: 'INR',
+      maximumFractionDigits: 0,
+    }).format(amount);
+  };
+
+  if (isLoading) {
+    return (
+      <DashboardLayout title="My Profile" subtitle="View and manage your personal information">
+        <div className="grid gap-6 lg:grid-cols-3">
+          <Skeleton className="h-96" />
+          <div className="lg:col-span-2">
+            <Skeleton className="h-96" />
+          </div>
+        </div>
+      </DashboardLayout>
+    );
+  }
 
   return (
     <DashboardLayout title="My Profile" subtitle="View and manage your personal information">
@@ -35,43 +89,71 @@ export default function Profile() {
         <div className="lg:col-span-1">
           <div className="bg-card rounded-xl border border-border p-6">
             <div className="text-center">
-              <div className="h-24 w-24 mx-auto rounded-full bg-primary/10 flex items-center justify-center mb-4">
-                <span className="text-3xl font-semibold text-primary">
-                  {user?.name.split(' ').map(n => n[0]).join('')}
-                </span>
+              <div className="relative inline-block">
+                <Avatar className="h-24 w-24 mx-auto mb-4">
+                  <AvatarImage src={profile?.avatar_url || undefined} alt={profile?.full_name} />
+                  <AvatarFallback className="text-3xl font-semibold bg-primary/10 text-primary">
+                    {profile?.full_name?.split(' ').map(n => n[0]).join('') || 'U'}
+                  </AvatarFallback>
+                </Avatar>
+                <button
+                  onClick={handleAvatarClick}
+                  disabled={uploadAvatar.isPending}
+                  className="absolute bottom-3 right-0 h-8 w-8 rounded-full bg-primary text-primary-foreground flex items-center justify-center hover:bg-primary/90 transition-colors"
+                >
+                  <Camera className="h-4 w-4" />
+                </button>
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/*"
+                  onChange={handleFileChange}
+                  className="hidden"
+                />
               </div>
-              <h2 className="text-xl font-semibold">{user?.name}</h2>
-              <p className="text-muted-foreground">{user?.position}</p>
+              <h2 className="text-xl font-semibold">{profile?.full_name}</h2>
+              <p className="text-muted-foreground">{profile?.position || 'Not assigned'}</p>
               <p className="text-sm text-primary mt-1 capitalize">{user?.role}</p>
             </div>
 
             <div className="mt-6 space-y-4">
               <div className="flex items-center gap-3 text-sm">
                 <Mail className="h-4 w-4 text-muted-foreground" />
-                <span>{user?.email}</span>
+                <span>{profile?.email}</span>
               </div>
               <div className="flex items-center gap-3 text-sm">
                 <Phone className="h-4 w-4 text-muted-foreground" />
-                <span>+1 234 567 890</span>
+                <span>{profile?.phone || 'Not provided'}</span>
               </div>
               <div className="flex items-center gap-3 text-sm">
                 <Building2 className="h-4 w-4 text-muted-foreground" />
-                <span>{user?.department}</span>
-              </div>
-              <div className="flex items-center gap-3 text-sm">
-                <MapPin className="h-4 w-4 text-muted-foreground" />
-                <span>San Francisco, CA</span>
+                <span>{profile?.department || 'Not assigned'}</span>
               </div>
               <div className="flex items-center gap-3 text-sm">
                 <Calendar className="h-4 w-4 text-muted-foreground" />
-                <span>Joined Jan 15, 2022</span>
+                <span>Joined {profile?.join_date ? format(new Date(profile.join_date), 'MMM d, yyyy') : 'N/A'}</span>
               </div>
             </div>
 
             <Button 
               variant="outline" 
               className="w-full mt-6"
-              onClick={() => setIsEditing(!isEditing)}
+              onClick={() => {
+                if (isEditing) {
+                  setFormData({
+                    full_name: profile?.full_name || '',
+                    email: profile?.email || '',
+                    phone: profile?.phone || '',
+                  });
+                } else {
+                  setFormData({
+                    full_name: profile?.full_name || '',
+                    email: profile?.email || '',
+                    phone: profile?.phone || '',
+                  });
+                }
+                setIsEditing(!isEditing);
+              }}
             >
               {isEditing ? (
                 <>
@@ -93,23 +175,19 @@ export default function Profile() {
             <div className="space-y-4">
               <div className="flex justify-between items-center">
                 <span className="text-muted-foreground text-sm">Remaining Annual Leave</span>
-                <span className="font-medium text-primary">12 days</span>
+                <span className="font-medium text-primary">{profile?.remaining_annual_leave || 0} days</span>
               </div>
               <div className="flex justify-between items-center">
                 <span className="text-muted-foreground text-sm">Remaining Sick Leave</span>
-                <span className="font-medium text-info">8 days</span>
+                <span className="font-medium text-info">{profile?.remaining_sick_leave || 0} days</span>
               </div>
               <div className="flex justify-between items-center">
-                <span className="text-muted-foreground text-sm">Attendance Rate</span>
-                <span className="font-medium text-success">96%</span>
+                <span className="text-muted-foreground text-sm">Monthly Salary</span>
+                <span className="font-medium text-success">{formatCurrency(profile?.salary)}</span>
               </div>
               <div className="flex justify-between items-center">
-                <span className="text-muted-foreground text-sm">Days Present</span>
-                <span className="font-medium">22 days</span>
-              </div>
-              <div className="flex justify-between items-center">
-                <span className="text-muted-foreground text-sm">Days Absent</span>
-                <span className="font-medium">0 days</span>
+                <span className="text-muted-foreground text-sm">Status</span>
+                <span className="font-medium capitalize">{profile?.status || 'Active'}</span>
               </div>
             </div>
           </div>
@@ -131,8 +209,8 @@ export default function Profile() {
                   <div className="space-y-2">
                     <Label>Full Name</Label>
                     <Input 
-                      value={formData.name}
-                      onChange={(e) => setFormData({...formData, name: e.target.value})}
+                      value={isEditing ? formData.full_name : profile?.full_name || ''}
+                      onChange={(e) => setFormData({...formData, full_name: e.target.value})}
                       disabled={!isEditing}
                     />
                   </div>
@@ -140,49 +218,26 @@ export default function Profile() {
                     <Label>Email Address</Label>
                     <Input 
                       type="email"
-                      value={formData.email}
-                      onChange={(e) => setFormData({...formData, email: e.target.value})}
-                      disabled={!isEditing}
+                      value={profile?.email || ''}
+                      disabled
+                      className="bg-muted"
                     />
                   </div>
                   <div className="space-y-2">
                     <Label>Phone Number</Label>
                     <Input 
-                      value={formData.phone}
+                      value={isEditing ? formData.phone : profile?.phone || ''}
                       onChange={(e) => setFormData({...formData, phone: e.target.value})}
                       disabled={!isEditing}
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label>Date of Birth</Label>
-                    <Input 
-                      type="date"
-                      defaultValue="1990-05-15"
-                      disabled={!isEditing}
-                    />
-                  </div>
-                  <div className="space-y-2 md:col-span-2">
-                    <Label>Address</Label>
-                    <Input 
-                      value={formData.address}
-                      onChange={(e) => setFormData({...formData, address: e.target.value})}
-                      disabled={!isEditing}
-                    />
-                  </div>
-                  <div className="space-y-2 md:col-span-2">
-                    <Label>Emergency Contact</Label>
-                    <Input 
-                      value={formData.emergencyContact}
-                      onChange={(e) => setFormData({...formData, emergencyContact: e.target.value})}
-                      disabled={!isEditing}
+                      placeholder="Enter phone number"
                     />
                   </div>
                 </div>
                 {isEditing && (
                   <div className="flex justify-end mt-6">
-                    <Button onClick={handleSave}>
+                    <Button onClick={handleSave} disabled={updateProfile.isPending}>
                       <Save className="h-4 w-4 mr-2" />
-                      Save Changes
+                      {updateProfile.isPending ? 'Saving...' : 'Save Changes'}
                     </Button>
                   </div>
                 )}
@@ -194,36 +249,28 @@ export default function Profile() {
                 <h3 className="font-semibold mb-6">Employment Details</h3>
                 <div className="grid gap-6 md:grid-cols-2">
                   <div className="space-y-2">
-                    <Label>Employee ID</Label>
-                    <Input value="EMP-2022-001" disabled />
-                  </div>
-                  <div className="space-y-2">
                     <Label>Department</Label>
-                    <Input value={user?.department} disabled />
+                    <Input value={profile?.department || 'Not assigned'} disabled className="bg-muted" />
                   </div>
                   <div className="space-y-2">
                     <Label>Position</Label>
-                    <Input value={user?.position} disabled />
-                  </div>
-                  <div className="space-y-2">
-                    <Label>Employment Type</Label>
-                    <Input value="Full-time" disabled />
+                    <Input value={profile?.position || 'Not assigned'} disabled className="bg-muted" />
                   </div>
                   <div className="space-y-2">
                     <Label>Join Date</Label>
-                    <Input value="January 15, 2022" disabled />
+                    <Input 
+                      value={profile?.join_date ? format(new Date(profile.join_date), 'MMMM d, yyyy') : 'N/A'} 
+                      disabled 
+                      className="bg-muted" 
+                    />
                   </div>
                   <div className="space-y-2">
-                    <Label>Reporting Manager</Label>
-                    <Input value="Sarah Johnson" disabled />
+                    <Label>Status</Label>
+                    <Input value={profile?.status || 'Active'} disabled className="bg-muted capitalize" />
                   </div>
                   <div className="space-y-2">
-                    <Label>Work Location</Label>
-                    <Input value="San Francisco Office" disabled />
-                  </div>
-                  <div className="space-y-2">
-                    <Label>Work Schedule</Label>
-                    <Input value="Mon - Fri, 9:00 AM - 6:00 PM" disabled />
+                    <Label>Monthly Salary</Label>
+                    <Input value={formatCurrency(profile?.salary)} disabled className="bg-muted" />
                   </div>
                 </div>
               </div>
@@ -232,28 +279,11 @@ export default function Profile() {
             <TabsContent value="documents">
               <div className="bg-card rounded-xl border border-border p-6">
                 <h3 className="font-semibold mb-6">Documents</h3>
-                <div className="space-y-4">
-                  {[
-                    { name: 'Employment Contract', date: 'Jan 15, 2022', type: 'PDF' },
-                    { name: 'ID Verification', date: 'Jan 10, 2022', type: 'PDF' },
-                    { name: 'Tax Form W-4', date: 'Jan 12, 2022', type: 'PDF' },
-                    { name: 'NDA Agreement', date: 'Jan 15, 2022', type: 'PDF' },
-                  ].map((doc) => (
-                    <div key={doc.name} className="flex items-center justify-between p-4 rounded-lg bg-muted/50">
-                      <div className="flex items-center gap-3">
-                        <div className="h-10 w-10 rounded-lg bg-primary/10 flex items-center justify-center">
-                          <span className="text-xs font-medium text-primary">{doc.type}</span>
-                        </div>
-                        <div>
-                          <p className="font-medium">{doc.name}</p>
-                          <p className="text-xs text-muted-foreground">Uploaded on {doc.date}</p>
-                        </div>
-                      </div>
-                      <Button variant="ghost" size="sm">
-                        Download
-                      </Button>
-                    </div>
-                  ))}
+                <div className="text-center py-12 text-muted-foreground">
+                  <p>No documents uploaded yet.</p>
+                  <Button variant="outline" className="mt-4">
+                    Upload Document
+                  </Button>
                 </div>
               </div>
             </TabsContent>

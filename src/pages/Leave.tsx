@@ -6,6 +6,9 @@ import { StatCard } from '@/components/ui/stat-card';
 import { StatusBadge } from '@/components/ui/status-badge';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/contexts/AuthContext';
+import { useLeaveRequests, useCreateLeaveRequest, useUpdateLeaveStatus } from '@/hooks/useLeaveRequests';
+import { useMyProfile } from '@/hooks/useProfiles';
+import { format, differenceInDays } from 'date-fns';
 import {
   Dialog,
   DialogContent,
@@ -24,60 +27,51 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { useToast } from '@/hooks/use-toast';
-
-interface LeaveRequest {
-  id: string;
-  employee: string;
-  type: string;
-  startDate: string;
-  endDate: string;
-  days: number;
-  reason: string;
-  status: 'approved' | 'pending' | 'rejected';
-  appliedOn: string;
-  remainingAnnualLeave: number;
-  remainingSickLeave: number;
-}
-
-const leaveRequests: LeaveRequest[] = [
-  { id: '1', employee: 'Rahul Sharma', type: 'Vacation', startDate: 'Jan 15', endDate: 'Jan 20', days: 5, reason: 'Family vacation', status: 'pending', appliedOn: 'Jan 5', remainingAnnualLeave: 12, remainingSickLeave: 8 },
-  { id: '2', employee: 'Priya Patel', type: 'Sick Leave', startDate: 'Jan 10', endDate: 'Jan 10', days: 1, reason: 'Medical appointment', status: 'approved', appliedOn: 'Jan 9', remainingAnnualLeave: 15, remainingSickLeave: 9 },
-  { id: '3', employee: 'Amit Kumar', type: 'Personal', startDate: 'Jan 12', endDate: 'Jan 13', days: 2, reason: 'Personal matters', status: 'rejected', appliedOn: 'Jan 8', remainingAnnualLeave: 8, remainingSickLeave: 6 },
-  { id: '4', employee: 'Neha Singh', type: 'Vacation', startDate: 'Jan 22', endDate: 'Jan 25', days: 4, reason: 'Travel plans', status: 'pending', appliedOn: 'Jan 10', remainingAnnualLeave: 18, remainingSickLeave: 10 },
-  { id: '5', employee: 'Vikram Reddy', type: 'Sick Leave', startDate: 'Jan 8', endDate: 'Jan 9', days: 2, reason: 'Flu', status: 'approved', appliedOn: 'Jan 7', remainingAnnualLeave: 5, remainingSickLeave: 1 },
-];
+import { Skeleton } from '@/components/ui/skeleton';
 
 export default function Leave() {
   const { user } = useAuth();
-  const { toast } = useToast();
   const isHR = user?.role === 'hr';
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [statusFilter, setStatusFilter] = useState<string>('all');
+  const [newRequest, setNewRequest] = useState({
+    leave_type: '',
+    start_date: '',
+    end_date: '',
+    reason: '',
+  });
 
-  const myLeaves = leaveRequests.filter(r => r.employee === 'Rahul Sharma');
-  const baseRequests = isHR ? leaveRequests : myLeaves;
-  const displayRequests = statusFilter === 'all' 
-    ? baseRequests 
-    : baseRequests.filter(r => r.status === statusFilter);
+  const { data: leaveRequests, isLoading } = useLeaveRequests(statusFilter);
+  const { data: myProfile } = useMyProfile();
+  const createLeave = useCreateLeaveRequest();
+  const updateStatus = useUpdateLeaveStatus();
   
-  const pendingCount = leaveRequests.filter(r => r.status === 'pending').length;
-  const approvedCount = leaveRequests.filter(r => r.status === 'approved').length;
-  const rejectedCount = leaveRequests.filter(r => r.status === 'rejected').length;
+  const pendingCount = leaveRequests?.filter(r => r.status === 'pending').length || 0;
+  const approvedCount = leaveRequests?.filter(r => r.status === 'approved').length || 0;
+  const rejectedCount = leaveRequests?.filter(r => r.status === 'rejected').length || 0;
+
+  const handleSubmitRequest = () => {
+    if (!newRequest.leave_type || !newRequest.start_date || !newRequest.end_date) return;
+
+    const days = differenceInDays(new Date(newRequest.end_date), new Date(newRequest.start_date)) + 1;
+
+    createLeave.mutate({
+      leave_type: newRequest.leave_type,
+      start_date: newRequest.start_date,
+      end_date: newRequest.end_date,
+      days,
+      reason: newRequest.reason,
+    });
+    setIsDialogOpen(false);
+    setNewRequest({ leave_type: '', start_date: '', end_date: '', reason: '' });
+  };
 
   const handleApprove = (id: string) => {
-    toast({
-      title: 'Leave Approved',
-      description: 'The leave request has been approved successfully.',
-    });
+    updateStatus.mutate({ id, status: 'approved' });
   };
 
   const handleReject = (id: string) => {
-    toast({
-      title: 'Leave Rejected',
-      description: 'The leave request has been rejected.',
-      variant: 'destructive',
-    });
+    updateStatus.mutate({ id, status: 'rejected' });
   };
 
   return (
@@ -98,22 +92,22 @@ export default function Leave() {
             />
             <StatCard
               title="Approved This Month"
-              value="24"
+              value={approvedCount}
               subtitle="Leave requests"
               icon={CheckCircle}
               iconClassName="bg-success/10 text-success"
             />
             <StatCard
-              title="On Leave Today"
-              value="8"
-              subtitle="Employees"
+              title="Rejected"
+              value={rejectedCount}
+              subtitle="This period"
               icon={Calendar}
-              iconClassName="bg-info/10 text-info"
+              iconClassName="bg-destructive/10 text-destructive"
             />
             <StatCard
               title="Total Requests"
-              value="42"
-              subtitle="This year"
+              value={leaveRequests?.length || 0}
+              subtitle="All time"
               icon={FileText}
             />
           </>
@@ -121,28 +115,28 @@ export default function Leave() {
           <>
             <StatCard
               title="Remaining Annual Leave"
-              value="12 days"
+              value={`${myProfile?.remaining_annual_leave || 0} days`}
               subtitle="Out of 20 days"
               icon={Calendar}
             />
             <StatCard
               title="Remaining Sick Leave"
-              value="8 days"
+              value={`${myProfile?.remaining_sick_leave || 0} days`}
               subtitle="Out of 10 days"
               icon={FileText}
               iconClassName="bg-info/10 text-info"
             />
             <StatCard
               title="Pending"
-              value="1"
+              value={pendingCount}
               subtitle="Request awaiting"
               icon={Clock}
               iconClassName="bg-warning/10 text-warning"
             />
             <StatCard
-              title="Used This Year"
-              value="5 days"
-              subtitle="Total leaves taken"
+              title="Total Requests"
+              value={leaveRequests?.length || 0}
+              subtitle="All time"
               icon={CheckCircle}
               iconClassName="bg-success/10 text-success"
             />
@@ -162,17 +156,6 @@ export default function Leave() {
               <SelectItem value="pending">Pending ({pendingCount})</SelectItem>
               <SelectItem value="approved">Approved ({approvedCount})</SelectItem>
               <SelectItem value="rejected">Rejected ({rejectedCount})</SelectItem>
-            </SelectContent>
-          </Select>
-          <Select defaultValue="all">
-            <SelectTrigger className="w-40">
-              <SelectValue placeholder="Leave type" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Types</SelectItem>
-              <SelectItem value="vacation">Vacation</SelectItem>
-              <SelectItem value="sick">Sick Leave</SelectItem>
-              <SelectItem value="personal">Personal</SelectItem>
             </SelectContent>
           </Select>
         </div>
@@ -195,45 +178,51 @@ export default function Leave() {
               <div className="grid gap-4 py-4">
                 <div className="space-y-2">
                   <Label>Leave Type</Label>
-                  <Select>
+                  <Select value={newRequest.leave_type} onValueChange={(v) => setNewRequest({...newRequest, leave_type: v})}>
                     <SelectTrigger>
                       <SelectValue placeholder="Select type" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="vacation">Vacation</SelectItem>
-                      <SelectItem value="sick">Sick Leave</SelectItem>
-                      <SelectItem value="personal">Personal</SelectItem>
-                      <SelectItem value="maternity">Maternity/Paternity</SelectItem>
+                      <SelectItem value="Vacation">Vacation</SelectItem>
+                      <SelectItem value="Sick Leave">Sick Leave</SelectItem>
+                      <SelectItem value="Personal">Personal</SelectItem>
+                      <SelectItem value="Maternity/Paternity">Maternity/Paternity</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label>Start Date</Label>
-                    <Input type="date" />
+                    <Input 
+                      type="date" 
+                      value={newRequest.start_date}
+                      onChange={(e) => setNewRequest({...newRequest, start_date: e.target.value})}
+                    />
                   </div>
                   <div className="space-y-2">
                     <Label>End Date</Label>
-                    <Input type="date" />
+                    <Input 
+                      type="date" 
+                      value={newRequest.end_date}
+                      onChange={(e) => setNewRequest({...newRequest, end_date: e.target.value})}
+                    />
                   </div>
                 </div>
                 <div className="space-y-2">
                   <Label>Reason</Label>
-                  <Textarea placeholder="Briefly describe the reason for your leave..." />
+                  <Textarea 
+                    placeholder="Briefly describe the reason for your leave..."
+                    value={newRequest.reason}
+                    onChange={(e) => setNewRequest({...newRequest, reason: e.target.value})}
+                  />
                 </div>
               </div>
               <div className="flex justify-end gap-3">
                 <Button variant="outline" onClick={() => setIsDialogOpen(false)}>
                   Cancel
                 </Button>
-                <Button onClick={() => {
-                  setIsDialogOpen(false);
-                  toast({
-                    title: 'Leave Request Submitted',
-                    description: 'Your request has been sent for approval.',
-                  });
-                }}>
-                  Submit Request
+                <Button onClick={handleSubmitRequest} disabled={createLeave.isPending}>
+                  {createLeave.isPending ? 'Submitting...' : 'Submit Request'}
                 </Button>
               </div>
             </DialogContent>
@@ -242,78 +231,94 @@ export default function Leave() {
       </div>
 
       {/* Leave Requests Table */}
-      <DataTable
-        columns={[
-          ...(isHR ? [{
-            key: 'employee',
-            header: 'Employee',
-            render: (request: LeaveRequest) => (
-              <div className="flex items-center gap-3">
-                <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center">
-                  <span className="text-xs font-medium text-primary">
-                    {request.employee.split(' ').map(n => n[0]).join('')}
-                  </span>
+      {isLoading ? (
+        <div className="space-y-3">
+          {[1, 2, 3, 4, 5].map(i => (
+            <Skeleton key={i} className="h-14" />
+          ))}
+        </div>
+      ) : (
+        <DataTable
+          columns={[
+            ...(isHR ? [{
+              key: 'employee',
+              header: 'Employee',
+              render: (request: typeof leaveRequests[0]) => (
+                <div className="flex items-center gap-3">
+                  <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center">
+                    <span className="text-xs font-medium text-primary">
+                      {request.profile?.full_name?.split(' ').map(n => n[0]).join('') || '?'}
+                    </span>
+                  </div>
+                  <div>
+                    <span className="font-medium block">{request.profile?.full_name || 'Unknown'}</span>
+                    <span className="text-xs text-muted-foreground">
+                      Annual: {request.profile?.remaining_annual_leave || 0}d | Sick: {request.profile?.remaining_sick_leave || 0}d
+                    </span>
+                  </div>
                 </div>
-                <div>
-                  <span className="font-medium block">{request.employee}</span>
-                  <span className="text-xs text-muted-foreground">
-                    Annual: {request.remainingAnnualLeave}d | Sick: {request.remainingSickLeave}d
-                  </span>
+              ),
+            }] : []),
+            { key: 'leave_type', header: 'Type' },
+            {
+              key: 'dates',
+              header: 'Dates',
+              render: (request: typeof leaveRequests[0]) => (
+                <span>{format(new Date(request.start_date), 'MMM d')} - {format(new Date(request.end_date), 'MMM d')}</span>
+              ),
+            },
+            {
+              key: 'days',
+              header: 'Days',
+              render: (request: typeof leaveRequests[0]) => (
+                <span className="font-medium">{request.days} day{request.days > 1 ? 's' : ''}</span>
+              ),
+            },
+            { key: 'reason', header: 'Reason' },
+            {
+              key: 'appliedOn',
+              header: 'Applied On',
+              render: (request: typeof leaveRequests[0]) => format(new Date(request.created_at), 'MMM d'),
+            },
+            {
+              key: 'status',
+              header: 'Status',
+              render: (request: typeof leaveRequests[0]) => (
+                <StatusBadge status={request.status as 'pending' | 'approved' | 'rejected'} />
+              ),
+            },
+            ...(isHR ? [{
+              key: 'actions',
+              header: 'Actions',
+              render: (request: typeof leaveRequests[0]) => request.status === 'pending' ? (
+                <div className="flex gap-2">
+                  <Button 
+                    size="sm" 
+                    variant="outline" 
+                    className="text-success hover:text-success hover:bg-success/10"
+                    onClick={() => handleApprove(request.id)}
+                    disabled={updateStatus.isPending}
+                  >
+                    Approve
+                  </Button>
+                  <Button 
+                    size="sm" 
+                    variant="outline"
+                    className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                    onClick={() => handleReject(request.id)}
+                    disabled={updateStatus.isPending}
+                  >
+                    Reject
+                  </Button>
                 </div>
-              </div>
-            ),
-          }] : []),
-          { key: 'type', header: 'Type' },
-          {
-            key: 'dates',
-            header: 'Dates',
-            render: (request: LeaveRequest) => (
-              <span>{request.startDate} - {request.endDate}</span>
-            ),
-          },
-          {
-            key: 'days',
-            header: 'Days',
-            render: (request: LeaveRequest) => (
-              <span className="font-medium">{request.days} day{request.days > 1 ? 's' : ''}</span>
-            ),
-          },
-          { key: 'reason', header: 'Reason' },
-          { key: 'appliedOn', header: 'Applied On' },
-          {
-            key: 'status',
-            header: 'Status',
-            render: (request: LeaveRequest) => <StatusBadge status={request.status} />,
-          },
-          ...(isHR ? [{
-            key: 'actions',
-            header: 'Actions',
-            render: (request: LeaveRequest) => request.status === 'pending' ? (
-              <div className="flex gap-2">
-                <Button 
-                  size="sm" 
-                  variant="outline" 
-                  className="text-success hover:text-success hover:bg-success/10"
-                  onClick={() => handleApprove(request.id)}
-                >
-                  Approve
-                </Button>
-                <Button 
-                  size="sm" 
-                  variant="outline"
-                  className="text-destructive hover:text-destructive hover:bg-destructive/10"
-                  onClick={() => handleReject(request.id)}
-                >
-                  Reject
-                </Button>
-              </div>
-            ) : null,
-          }] : []),
-        ]}
-        data={displayRequests}
-        keyExtractor={(request) => request.id}
-        emptyMessage="No leave requests found"
-      />
+              ) : null,
+            }] : []),
+          ]}
+          data={leaveRequests || []}
+          keyExtractor={(request) => request.id}
+          emptyMessage="No leave requests found"
+        />
+      )}
     </DashboardLayout>
   );
 }
