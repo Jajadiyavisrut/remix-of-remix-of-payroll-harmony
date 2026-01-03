@@ -148,11 +148,16 @@ export default function Login() {
             </Button>
           </form>
 
-           <div className="mt-6 text-center">
-             <p className="text-sm text-muted-foreground">
-               Need an account? Contact your HR admin to create one for you.
-             </p>
-           </div>
+          <div className="mt-6 text-center">
+            <p className="text-sm text-muted-foreground">
+              Need an account? Contact your HR admin to create one for you.
+            </p>
+            <div className="mt-4 p-3 bg-muted rounded-lg">
+              <p className="text-xs text-muted-foreground mb-1">Default HR Login (Development):</p>
+              <p className="text-xs font-mono">Email: hr@dayflow.com</p>
+              <p className="text-xs font-mono">Password: hradmin123</p>
+            </div>
+          </div>
         </div>
       </div>
     </div>

@@ -87,6 +87,67 @@ export function useTodayAttendance() {
   });
 }
 
+export function useTodayAttendanceForAll() {
+  const { user, session } = useAuth();
+  const isHR = user?.role === 'hr';
+  const today = format(new Date(), 'yyyy-MM-dd');
+
+  return useQuery({
+    queryKey: ['today-attendance-all', today],
+    queryFn: async () => {
+      if (!isHR || !session?.user?.id) return {};
+
+      const { data, error } = await supabase
+        .from('attendance')
+        .select('user_id, status')
+        .eq('date', today);
+
+      if (error) throw error;
+
+      // Create a map of user_id -> status
+      const statusMap: Record<string, string> = {};
+      data?.forEach(record => {
+        statusMap[record.user_id] = record.status || 'unknown';
+      });
+
+      return statusMap;
+    },
+    enabled: !!isHR && !!session?.user?.id,
+  });
+}
+
+export function useTodayLeaveStatus() {
+  const { user, session } = useAuth();
+  const isHR = user?.role === 'hr';
+  const today = format(new Date(), 'yyyy-MM-dd');
+
+  return useQuery({
+    queryKey: ['today-leave-status', today],
+    queryFn: async () => {
+      if (!isHR || !session?.user?.id) return {};
+
+      // Check for approved leave requests that include today
+      const { data, error } = await supabase
+        .from('leave_requests')
+        .select('user_id, start_date, end_date, status')
+        .eq('status', 'approved')
+        .lte('start_date', today)
+        .gte('end_date', today);
+
+      if (error) throw error;
+
+      // Create a map of user_id -> leave status
+      const leaveMap: Record<string, boolean> = {};
+      data?.forEach(leave => {
+        leaveMap[leave.user_id] = true;
+      });
+
+      return leaveMap;
+    },
+    enabled: !!isHR && !!session?.user?.id,
+  });
+}
+
 export function useCheckIn() {
   const queryClient = useQueryClient();
   const { toast } = useToast();

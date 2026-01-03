@@ -45,7 +45,7 @@ export default function Leave() {
   const { data: myProfile } = useMyProfile();
   const createLeave = useCreateLeaveRequest();
   const updateStatus = useUpdateLeaveStatus();
-  
+
   const pendingCount = leaveRequests?.filter(r => r.status === 'pending').length || 0;
   const approvedCount = leaveRequests?.filter(r => r.status === 'approved').length || 0;
   const rejectedCount = leaveRequests?.filter(r => r.status === 'rejected').length || 0;
@@ -75,8 +75,8 @@ export default function Leave() {
   };
 
   return (
-    <DashboardLayout 
-      title="Leave Management" 
+    <DashboardLayout
+      title="Leave Management"
       subtitle={isHR ? "Review and manage leave requests" : "Request and track your leaves"}
     >
       {/* Stats */}
@@ -159,7 +159,7 @@ export default function Leave() {
             </SelectContent>
           </Select>
         </div>
-        
+
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
           <DialogTrigger asChild>
             <Button>
@@ -182,10 +182,8 @@ export default function Leave() {
                     <SelectValue placeholder="Select type" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="Vacation">Vacation</SelectItem>
-                    <SelectItem value="Sick Leave">Sick Leave</SelectItem>
-                    <SelectItem value="Personal">Personal</SelectItem>
-                    <SelectItem value="Maternity/Paternity">Maternity/Paternity</SelectItem>
+                    <SelectItem value="vacation">Annual Leave</SelectItem>
+                    <SelectItem value="sick">Sick Leave</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -257,7 +255,17 @@ export default function Leave() {
                 </div>
               ),
             }] : []),
-            { key: 'leave_type', header: 'Type' },
+            {
+              key: 'leave_type',
+              header: 'Type',
+              render: (request: LeaveRequest) => (
+                <span className="capitalize">
+                  {request.leave_type === 'vacation' ? 'Annual Leave' :
+                    request.leave_type === 'sick' ? 'Sick Leave' :
+                      request.leave_type}
+                </span>
+              ),
+            },
             {
               key: 'dates',
               header: 'Dates',
@@ -290,17 +298,17 @@ export default function Leave() {
               header: 'Actions',
               render: (request: LeaveRequest) => request.status === 'pending' ? (
                 <div className="flex gap-2">
-                  <Button 
-                    size="sm" 
-                    variant="outline" 
+                  <Button
+                    size="sm"
+                    variant="outline"
                     className="text-success hover:text-success hover:bg-success/10"
                     onClick={() => handleApprove(request.id)}
                     disabled={updateStatus.isPending}
                   >
                     Approve
                   </Button>
-                  <Button 
-                    size="sm" 
+                  <Button
+                    size="sm"
                     variant="outline"
                     className="text-destructive hover:text-destructive hover:bg-destructive/10"
                     onClick={() => handleReject(request.id)}

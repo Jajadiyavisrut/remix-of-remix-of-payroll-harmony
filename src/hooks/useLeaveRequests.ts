@@ -81,6 +81,30 @@ export function useCreateLeaveRequest() {
     }) => {
       if (!session?.user?.id) throw new Error('Not authenticated');
 
+      // Check if user has enough leave days available
+      const { data: profile, error: profileError } = await supabase
+        .from('profiles')
+        .select('remaining_annual_leave, remaining_sick_leave')
+        .eq('user_id', session.user.id)
+        .single();
+
+      if (profileError) throw profileError;
+
+      const availableDays = request.leave_type === 'vacation'
+        ? (profile?.remaining_annual_leave || 0)
+        : (profile?.remaining_sick_leave || 0);
+
+      if (request.days > availableDays) {
+        const leaveTypeName = request.leave_type === 'vacation' ? 'Annual Leave' : 'Sick Leave';
+        throw new Error(`Insufficient ${leaveTypeName} days. You have ${availableDays} days available but requested ${request.days} days.`);
+      }
+
+      console.log('Creating leave request with data:', {
+        ...request,
+        user_id: session.user.id,
+        status: 'pending',
+      });
+
       const { data, error } = await supabase
         .from('leave_requests')
         .insert({
@@ -91,7 +115,12 @@ export function useCreateLeaveRequest() {
         .select()
         .single();
 
-      if (error) throw error;
+      if (error) {
+        console.error('Supabase error details:', error);
+        throw error;
+      }
+
+      console.log('Leave request created successfully:', data);
       return data;
     },
     onSuccess: () => {
@@ -102,9 +131,10 @@ export function useCreateLeaveRequest() {
       });
     },
     onError: (error) => {
+      console.error('Leave request creation error:', error);
       toast({
         title: 'Error',
-        description: 'Failed to submit leave request.',
+        description: error?.message || 'Failed to submit leave request.',
         variant: 'destructive',
       });
     },
@@ -120,6 +150,16 @@ export function useUpdateLeaveStatus() {
     mutationFn: async ({ id, status }: { id: string; status: 'approved' | 'rejected' }) => {
       if (!session?.user?.id) throw new Error('Not authenticated');
 
+      // First get the leave request details to know how many days to deduct
+      const { data: leaveRequest, error: fetchError } = await supabase
+        .from('leave_requests')
+        .select('*')
+        .eq('id', id)
+        .single();
+
+      if (fetchError) throw fetchError;
+
+      // Update the leave request status
       const { data, error } = await supabase
         .from('leave_requests')
         .update({
@@ -132,14 +172,45 @@ export function useUpdateLeaveStatus() {
         .single();
 
       if (error) throw error;
+
+      // If approved, deduct leave days from the user's profile
+      if (status === 'approved' && leaveRequest) {
+        const { data: profile, error: profileError } = await supabase
+          .from('profiles')
+          .select('remaining_annual_leave, remaining_sick_leave')
+          .eq('user_id', leaveRequest.user_id)
+          .single();
+
+        if (profileError) throw profileError;
+
+        const updates: any = {};
+
+        if (leaveRequest.leave_type === 'vacation') {
+          updates.remaining_annual_leave = (profile?.remaining_annual_leave || 0) - leaveRequest.days;
+        } else if (leaveRequest.leave_type === 'sick') {
+          updates.remaining_sick_leave = (profile?.remaining_sick_leave || 0) - leaveRequest.days;
+        }
+
+        // Update the profile with deducted leave days
+        const { error: updateError } = await supabase
+          .from('profiles')
+          .update(updates)
+          .eq('user_id', leaveRequest.user_id);
+
+        if (updateError) throw updateError;
+      }
+
       return data;
     },
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ['leave-requests'] });
       queryClient.invalidateQueries({ queryKey: ['profiles'] });
+      queryClient.invalidateQueries({ queryKey: ['my-profile'] });
       toast({
         title: variables.status === 'approved' ? 'Leave Approved' : 'Leave Rejected',
-        description: `The leave request has been ${variables.status}.`,
+        description: variables.status === 'approved'
+          ? 'The leave request has been approved and leave days have been deducted.'
+          : 'The leave request has been rejected.',
         variant: variables.status === 'approved' ? 'default' : 'destructive',
       });
     },

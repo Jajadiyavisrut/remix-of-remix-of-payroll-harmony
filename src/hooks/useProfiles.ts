@@ -98,14 +98,11 @@ export function useUpdateProfile() {
 export function useUploadAvatar() {
   const queryClient = useQueryClient();
   const { toast } = useToast();
-  const { session } = useAuth();
 
   return useMutation({
-    mutationFn: async (file: File) => {
-      if (!session?.user?.id) throw new Error('Not authenticated');
-
+    mutationFn: async ({ userId, file }: { userId: string; file: File }) => {
       const fileExt = file.name.split('.').pop();
-      const fileName = `${session.user.id}/avatar.${fileExt}`;
+      const fileName = `${userId}/avatar.${fileExt}`;
 
       // Upload to storage
       const { error: uploadError } = await supabase.storage
@@ -123,7 +120,7 @@ export function useUploadAvatar() {
       const { error: updateError } = await supabase
         .from('profiles')
         .update({ avatar_url: publicUrl })
-        .eq('user_id', session.user.id);
+        .eq('user_id', userId);
 
       if (updateError) throw updateError;
 

@@ -1,7 +1,15 @@
 // Supabase Edge Function: admin-create-employee
 // Creates an employee login + profile. Only HR can call this.
 
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+// @ts-ignore - Deno globals are available in Supabase Edge Functions
+declare const Deno: {
+  serve(handler: (req: Request) => Promise<Response>): void;
+  env: {
+    get(key: string): string | undefined;
+  };
+};
+
+import { createClient } from "@supabase/supabase-js";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
