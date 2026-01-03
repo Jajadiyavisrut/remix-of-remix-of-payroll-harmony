@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Building2, Eye, EyeOff, Loader2 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
@@ -12,17 +12,23 @@ export default function Login() {
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const { login } = useAuth();
+  const { login, isAuthenticated } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
+
+  useEffect(() => {
+    if (isAuthenticated) {
+      navigate('/dashboard');
+    }
+  }, [isAuthenticated, navigate]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
 
     try {
-      const success = await login(email, password);
-      if (success) {
+      const result = await login(email, password);
+      if (result.success) {
         toast({
           title: 'Welcome back!',
           description: 'You have successfully signed in.',
@@ -31,7 +37,7 @@ export default function Login() {
       } else {
         toast({
           title: 'Sign in failed',
-          description: 'Invalid email or password. Try hr@company.com',
+          description: result.error || 'Invalid email or password.',
           variant: 'destructive',
         });
       }
@@ -149,15 +155,6 @@ export default function Login() {
                 Sign up
               </Link>
             </p>
-          </div>
-
-          <div className="mt-8 p-4 rounded-lg bg-muted/50 border border-border">
-            <p className="text-xs text-muted-foreground text-center mb-2">Demo Credentials</p>
-            <div className="text-xs text-center space-y-1">
-              <p><span className="font-medium">HR:</span> hr@company.com</p>
-              <p><span className="font-medium">Employee:</span> employee@company.com</p>
-              <p className="text-muted-foreground">Password: any 6+ characters</p>
-            </div>
           </div>
         </div>
       </div>

@@ -1,4 +1,5 @@
-import { Bell, Search, ChevronDown } from 'lucide-react';
+import { Bell, Search, ChevronDown, LogOut } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import {
@@ -18,7 +19,13 @@ interface HeaderProps {
 }
 
 export function Header({ title, subtitle }: HeaderProps) {
-  const { user, switchRole } = useAuth();
+  const { user, logout } = useAuth();
+  const navigate = useNavigate();
+
+  const handleLogout = async () => {
+    await logout();
+    navigate('/login');
+  };
 
   return (
     <header className="sticky top-0 z-30 flex h-16 items-center justify-between border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 px-6">
@@ -52,12 +59,12 @@ export function Header({ title, subtitle }: HeaderProps) {
             <Button variant="ghost" className="flex items-center gap-2 px-2">
               <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center">
                 <span className="text-xs font-medium text-primary">
-                  {user?.name.split(' ').map(n => n[0]).join('')}
+                  {user?.name?.split(' ').map(n => n[0]).join('') || 'U'}
                 </span>
               </div>
               <div className="hidden md:block text-left">
-                <p className="text-sm font-medium">{user?.name}</p>
-                <p className="text-xs text-muted-foreground capitalize">{user?.role}</p>
+                <p className="text-sm font-medium">{user?.name || 'User'}</p>
+                <p className="text-xs text-muted-foreground capitalize">{user?.role || 'employee'}</p>
               </div>
               <ChevronDown className="h-4 w-4 text-muted-foreground" />
             </Button>
@@ -65,23 +72,23 @@ export function Header({ title, subtitle }: HeaderProps) {
           <DropdownMenuContent align="end" className="w-56">
             <DropdownMenuLabel>My Account</DropdownMenuLabel>
             <DropdownMenuSeparator />
-            <DropdownMenuItem>Profile Settings</DropdownMenuItem>
+            <DropdownMenuItem onClick={() => navigate('/profile')}>
+              Profile Settings
+            </DropdownMenuItem>
             <DropdownMenuItem>Help & Support</DropdownMenuItem>
             <DropdownMenuSeparator />
             <DropdownMenuLabel className="text-xs text-muted-foreground font-normal">
-              Switch Role (Demo)
+              Current Role
             </DropdownMenuLabel>
-            <DropdownMenuItem onClick={() => switchRole('hr')}>
-              <Badge variant={user?.role === 'hr' ? 'default' : 'outline'} className="mr-2">
-                HR
+            <div className="px-2 py-1.5">
+              <Badge variant="default" className="capitalize">
+                {user?.role || 'employee'}
               </Badge>
-              Full Access
-            </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => switchRole('employee')}>
-              <Badge variant={user?.role === 'employee' ? 'default' : 'outline'} className="mr-2">
-                Employee
-              </Badge>
-              Limited Access
+            </div>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem onClick={handleLogout} className="text-destructive focus:text-destructive">
+              <LogOut className="mr-2 h-4 w-4" />
+              Sign out
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
