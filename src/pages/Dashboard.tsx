@@ -1,4 +1,3 @@
-import { useState } from 'react';
 import { Users, IndianRupee, Calendar, FileText, TrendingUp, Clock, CheckCircle, XCircle } from 'lucide-react';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { StatCard } from '@/components/ui/stat-card';
@@ -6,6 +5,10 @@ import { StatusBadge } from '@/components/ui/status-badge';
 import { DataTable } from '@/components/ui/data-table';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
+import { useDashboardStats } from '@/hooks/useDashboardStats';
+import { useLeaveRequests } from '@/hooks/useLeaveRequests';
+import { format } from 'date-fns';
+import { useState } from 'react';
 import {
   Select,
   SelectContent,
@@ -13,99 +16,97 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-
-const recentLeaveRequests = [
-  { id: '1', employee: 'Rahul Sharma', type: 'Vacation', dates: 'Jan 15 - Jan 20', status: 'pending' as const, remainingAnnual: 12, remainingSick: 8 },
-  { id: '2', employee: 'Priya Patel', type: 'Sick Leave', dates: 'Jan 10', status: 'approved' as const, remainingAnnual: 15, remainingSick: 9 },
-  { id: '3', employee: 'Amit Kumar', type: 'Personal', dates: 'Jan 12 - Jan 13', status: 'rejected' as const, remainingAnnual: 8, remainingSick: 6 },
-  { id: '4', employee: 'Neha Singh', type: 'Vacation', dates: 'Jan 22 - Jan 25', status: 'pending' as const, remainingAnnual: 18, remainingSick: 10 },
-  { id: '5', employee: 'Vikram Reddy', type: 'Sick Leave', dates: 'Jan 8 - Jan 9', status: 'approved' as const, remainingAnnual: 5, remainingSick: 1 },
-];
-
-const upcomingPayroll = [
-  { id: '1', period: 'January 2024', employees: 24, amount: '₹12,50,000', status: 'Processing' },
-  { id: '2', period: 'December 2023', employees: 24, amount: '₹12,25,000', status: 'Completed' },
-];
+import { Skeleton } from '@/components/ui/skeleton';
 
 export default function Dashboard() {
   const { user } = useAuth();
   const isHR = user?.role === 'hr';
   const [leaveFilter, setLeaveFilter] = useState<string>('all');
+  
+  const { data: stats, isLoading: statsLoading } = useDashboardStats();
+  const { data: leaveRequests, isLoading: leavesLoading } = useLeaveRequests(leaveFilter);
 
-  const pendingCount = recentLeaveRequests.filter(r => r.status === 'pending').length;
-  const approvedCount = recentLeaveRequests.filter(r => r.status === 'approved').length;
-  const rejectedCount = recentLeaveRequests.filter(r => r.status === 'rejected').length;
-  const totalCount = recentLeaveRequests.length;
+  const pendingCount = leaveRequests?.filter(r => r.status === 'pending').length || 0;
+  const approvedCount = leaveRequests?.filter(r => r.status === 'approved').length || 0;
+  const rejectedCount = leaveRequests?.filter(r => r.status === 'rejected').length || 0;
+  const totalCount = leaveRequests?.length || 0;
 
-  const filteredLeaveRequests = leaveFilter === 'all' 
-    ? recentLeaveRequests 
-    : recentLeaveRequests.filter(r => r.status === leaveFilter);
+  const formatCurrency = (amount: number) => {
+    return new Intl.NumberFormat('en-IN', {
+      style: 'currency',
+      currency: 'INR',
+      maximumFractionDigits: 0,
+    }).format(amount);
+  };
 
   return (
     <DashboardLayout 
-      title={`Welcome back, ${user?.name.split(' ')[0]}`}
+      title={`Welcome back, ${user?.name?.split(' ')[0] || 'User'}`}
       subtitle={isHR ? 'Here\'s what\'s happening with your team today.' : 'Here\'s your overview for today.'}
     >
       {/* Stats Grid */}
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4 mb-8">
-        {isHR ? (
+        {statsLoading ? (
+          <>
+            {[1, 2, 3, 4].map(i => (
+              <Skeleton key={i} className="h-32" />
+            ))}
+          </>
+        ) : isHR ? (
           <>
             <StatCard
               title="Total Employees"
-              value="24"
-              subtitle="2 new this month"
+              value={stats?.totalEmployees || 0}
+              subtitle="Active team members"
               icon={Users}
-              trend={{ value: 8.2, isPositive: true }}
             />
             <StatCard
               title="Monthly Payroll"
-              value="₹12,50,000"
+              value={formatCurrency(stats?.monthlyPayroll || 0)}
               subtitle="Due in 5 days"
               icon={IndianRupee}
               iconClassName="bg-success/10 text-success"
-              trend={{ value: 3.1, isPositive: true }}
             />
             <StatCard
               title="Pending Leaves"
-              value={pendingCount}
+              value={stats?.pendingLeaves || 0}
               subtitle="Requires attention"
               icon={FileText}
               iconClassName="bg-warning/10 text-warning"
             />
             <StatCard
               title="Attendance Today"
-              value="94%"
-              subtitle="147 present"
+              value={`${stats?.attendanceRate || 0}%`}
+              subtitle={`${stats?.presentToday || 0} present`}
               icon={Calendar}
               iconClassName="bg-info/10 text-info"
-              trend={{ value: 2.4, isPositive: true }}
             />
           </>
         ) : (
           <>
             <StatCard
               title="Remaining Annual Leave"
-              value="12 days"
+              value={`${stats?.remainingAnnualLeave || 0} days`}
               subtitle="Out of 20 days"
               icon={Calendar}
             />
             <StatCard
               title="This Month Salary"
-              value="₹52,000"
+              value={formatCurrency(stats?.salary || 0)}
               subtitle="Paid on 25th"
               icon={IndianRupee}
               iconClassName="bg-success/10 text-success"
             />
             <StatCard
               title="Attendance"
-              value="96%"
+              value={`${stats?.attendanceRate || 0}%`}
               subtitle="This month"
               icon={Clock}
               iconClassName="bg-info/10 text-info"
             />
             <StatCard
               title="Pending Requests"
-              value="1"
+              value={stats?.pendingRequests || 0}
               subtitle="Awaiting approval"
               icon={FileText}
               iconClassName="bg-warning/10 text-warning"
@@ -162,31 +163,48 @@ export default function Dashboard() {
             </div>
           )}
 
-          <DataTable
-            columns={[
-              ...(isHR ? [{
-                key: 'employee',
-                header: 'Employee',
-                render: (item: typeof recentLeaveRequests[0]) => (
-                  <div>
-                    <span className="font-medium block">{item.employee}</span>
-                    <span className="text-xs text-muted-foreground">
-                      Annual: {item.remainingAnnual}d | Sick: {item.remainingSick}d
-                    </span>
-                  </div>
-                ),
-              }] : [{ key: 'employee', header: 'Employee' }]),
-              { key: 'type', header: 'Type' },
-              { key: 'dates', header: 'Dates' },
-              {
-                key: 'status',
-                header: 'Status',
-                render: (item: typeof recentLeaveRequests[0]) => <StatusBadge status={item.status} />,
-              },
-            ]}
-            data={filteredLeaveRequests}
-            keyExtractor={(item) => item.id}
-          />
+          {leavesLoading ? (
+            <div className="space-y-3">
+              {[1, 2, 3].map(i => (
+                <Skeleton key={i} className="h-12" />
+              ))}
+            </div>
+          ) : (
+            <DataTable
+              columns={[
+                ...(isHR ? [{
+                  key: 'employee',
+                  header: 'Employee',
+                  render: (item: typeof leaveRequests[0]) => (
+                    <div>
+                      <span className="font-medium block">{item.profile?.full_name || 'Unknown'}</span>
+                      <span className="text-xs text-muted-foreground">
+                        Annual: {item.profile?.remaining_annual_leave || 0}d | Sick: {item.profile?.remaining_sick_leave || 0}d
+                      </span>
+                    </div>
+                  ),
+                }] : []),
+                { key: 'leave_type', header: 'Type' },
+                {
+                  key: 'dates',
+                  header: 'Dates',
+                  render: (item: typeof leaveRequests[0]) => (
+                    <span>{format(new Date(item.start_date), 'MMM d')} - {format(new Date(item.end_date), 'MMM d')}</span>
+                  ),
+                },
+                {
+                  key: 'status',
+                  header: 'Status',
+                  render: (item: typeof leaveRequests[0]) => (
+                    <StatusBadge status={item.status as 'pending' | 'approved' | 'rejected'} />
+                  ),
+                },
+              ]}
+              data={leaveRequests?.slice(0, 5) || []}
+              keyExtractor={(item) => item.id}
+              emptyMessage="No leave requests found"
+            />
+          )}
         </div>
 
         {/* Quick Actions / Payroll Overview */}
@@ -213,7 +231,7 @@ export default function Dashboard() {
                   <FileText className="h-5 w-5 mr-3 text-warning" />
                   <div className="text-left">
                     <p className="font-medium">Review Leaves</p>
-                    <p className="text-xs text-muted-foreground">12 pending requests</p>
+                    <p className="text-xs text-muted-foreground">{pendingCount} pending requests</p>
                   </div>
                 </Button>
                 <Button variant="outline" className="justify-start h-auto py-4">
@@ -235,20 +253,16 @@ export default function Dashboard() {
               </div>
             </div>
             <div className="space-y-4">
-              {upcomingPayroll.map((payroll) => (
-                <div key={payroll.id} className="flex items-center justify-between p-4 rounded-lg bg-muted/50">
-                  <div>
-                    <p className="font-medium">{payroll.period}</p>
-                    <p className="text-sm text-muted-foreground">{payroll.employees} employees</p>
-                  </div>
-                  <div className="text-right">
-                    <p className="font-semibold text-lg">{payroll.amount}</p>
-                    <p className={`text-xs ${payroll.status === 'Completed' ? 'text-success' : 'text-warning'}`}>
-                      {payroll.status}
-                    </p>
-                  </div>
+              <div className="flex items-center justify-between p-4 rounded-lg bg-muted/50">
+                <div>
+                  <p className="font-medium">{format(new Date(), 'MMMM yyyy')}</p>
+                  <p className="text-sm text-muted-foreground">{stats?.totalEmployees || 0} employees</p>
                 </div>
-              ))}
+                <div className="text-right">
+                  <p className="font-semibold text-lg">{formatCurrency(stats?.monthlyPayroll || stats?.salary || 0)}</p>
+                  <p className="text-xs text-warning">Processing</p>
+                </div>
+              </div>
             </div>
           </div>
         </div>

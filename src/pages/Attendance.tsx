@@ -5,7 +5,9 @@ import { DataTable } from '@/components/ui/data-table';
 import { StatCard } from '@/components/ui/stat-card';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/contexts/AuthContext';
-import { useToast } from '@/hooks/use-toast';
+import { format } from 'date-fns';
+import { useAttendance, useTodayAttendance, useCheckIn, useCheckOut, useManualAttendance } from '@/hooks/useAttendance';
+import { useProfiles } from '@/hooks/useProfiles';
 import {
   Select,
   SelectContent,
@@ -23,25 +25,7 @@ import {
 } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
-
-interface AttendanceRecord {
-  id: string;
-  employee: string;
-  date: string;
-  checkIn: string;
-  checkOut: string;
-  workHours: string;
-  status: 'present' | 'absent' | 'late' | 'half-day';
-}
-
-const attendanceRecords: AttendanceRecord[] = [
-  { id: '1', employee: 'Rahul Sharma', date: 'Jan 3, 2024', checkIn: '09:02 AM', checkOut: '06:15 PM', workHours: '9h 13m', status: 'present' },
-  { id: '2', employee: 'Priya Patel', date: 'Jan 3, 2024', checkIn: '08:55 AM', checkOut: '05:30 PM', workHours: '8h 35m', status: 'present' },
-  { id: '3', employee: 'Amit Kumar', date: 'Jan 3, 2024', checkIn: '10:20 AM', checkOut: '06:45 PM', workHours: '8h 25m', status: 'late' },
-  { id: '4', employee: 'Neha Singh', date: 'Jan 3, 2024', checkIn: '-', checkOut: '-', workHours: '-', status: 'absent' },
-  { id: '5', employee: 'Vikram Reddy', date: 'Jan 3, 2024', checkIn: '09:00 AM', checkOut: '01:00 PM', workHours: '4h 0m', status: 'half-day' },
-  { id: '6', employee: 'Anjali Gupta', date: 'Jan 3, 2024', checkIn: '08:45 AM', checkOut: '05:50 PM', workHours: '9h 5m', status: 'present' },
-];
+import { Skeleton } from '@/components/ui/skeleton';
 
 const statusStyles = {
   present: { icon: CheckCircle2, color: 'text-success', bg: 'bg-success/10', label: 'Present' },
@@ -52,44 +36,59 @@ const statusStyles = {
 
 export default function Attendance() {
   const { user } = useAuth();
-  const { toast } = useToast();
   const isHR = user?.role === 'hr';
-  const [selectedMonth, setSelectedMonth] = useState('january');
-  const [isCheckedIn, setIsCheckedIn] = useState(false);
-  const [checkInTime, setCheckInTime] = useState<string | null>(null);
+  const [selectedMonth, setSelectedMonth] = useState('current');
   const [isManualEntryOpen, setIsManualEntryOpen] = useState(false);
+  const [manualEntry, setManualEntry] = useState({
+    userId: '',
+    date: format(new Date(), 'yyyy-MM-dd'),
+    checkIn: '',
+    checkOut: '',
+    status: 'present',
+    notes: '',
+  });
 
-  const myAttendance = attendanceRecords.filter(r => r.employee === 'Rahul Sharma');
-  const displayRecords = isHR ? attendanceRecords : myAttendance;
+  const { data: attendance, isLoading } = useAttendance();
+  const { data: todayRecord } = useTodayAttendance();
+  const { data: profiles } = useProfiles();
+  const checkIn = useCheckIn();
+  const checkOut = useCheckOut();
+  const manualAttendance = useManualAttendance();
+
+  const isCheckedIn = !!todayRecord && !todayRecord.check_out;
+  const hasCheckedOut = !!todayRecord?.check_out;
+
+  const presentCount = attendance?.filter(a => a.status === 'present' || a.status === 'late').length || 0;
+  const absentCount = attendance?.filter(a => a.status === 'absent').length || 0;
+  const lateCount = attendance?.filter(a => a.status === 'late').length || 0;
 
   const handleCheckIn = () => {
-    const now = new Date();
-    const timeString = now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
-    setIsCheckedIn(true);
-    setCheckInTime(timeString);
-    toast({
-      title: 'Checked In Successfully',
-      description: `You checked in at ${timeString}`,
-    });
+    checkIn.mutate();
   };
 
   const handleCheckOut = () => {
-    const now = new Date();
-    const timeString = now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
-    setIsCheckedIn(false);
-    setCheckInTime(null);
-    toast({
-      title: 'Checked Out Successfully',
-      description: `You checked out at ${timeString}`,
-    });
+    if (todayRecord?.id) {
+      checkOut.mutate(todayRecord.id);
+    }
   };
 
   const handleManualEntry = () => {
-    setIsManualEntryOpen(false);
-    toast({
-      title: 'Attendance Recorded',
-      description: 'Manual attendance entry has been saved.',
+    if (!manualEntry.userId) return;
+
+    manualAttendance.mutate({
+      user_id: manualEntry.userId,
+      date: manualEntry.date,
+      check_in: manualEntry.checkIn ? new Date(`${manualEntry.date}T${manualEntry.checkIn}`).toISOString() : null,
+      check_out: manualEntry.checkOut ? new Date(`${manualEntry.date}T${manualEntry.checkOut}`).toISOString() : null,
+      status: manualEntry.status,
+      notes: manualEntry.notes || undefined,
     });
+    setIsManualEntryOpen(false);
+  };
+
+  const formatTime = (isoString: string | null) => {
+    if (!isoString) return '-';
+    return format(new Date(isoString), 'hh:mm a');
   };
 
   return (
@@ -104,21 +103,28 @@ export default function Attendance() {
             <div>
               <h3 className="text-lg font-semibold">Today's Attendance</h3>
               <p className="text-sm text-muted-foreground">
-                {isCheckedIn 
-                  ? `Checked in at ${checkInTime}` 
-                  : 'You have not checked in yet'}
+                {hasCheckedOut 
+                  ? `Checked out at ${formatTime(todayRecord?.check_out || null)}`
+                  : isCheckedIn 
+                    ? `Checked in at ${formatTime(todayRecord?.check_in || null)}` 
+                    : 'You have not checked in yet'}
               </p>
             </div>
             <div className="flex gap-3">
-              {!isCheckedIn ? (
-                <Button onClick={handleCheckIn} className="gap-2">
+              {!isCheckedIn && !hasCheckedOut ? (
+                <Button onClick={handleCheckIn} disabled={checkIn.isPending} className="gap-2">
                   <LogIn className="h-4 w-4" />
-                  Check In
+                  {checkIn.isPending ? 'Checking in...' : 'Check In'}
+                </Button>
+              ) : isCheckedIn ? (
+                <Button onClick={handleCheckOut} disabled={checkOut.isPending} variant="destructive" className="gap-2">
+                  <LogOut className="h-4 w-4" />
+                  {checkOut.isPending ? 'Checking out...' : 'Check Out'}
                 </Button>
               ) : (
-                <Button onClick={handleCheckOut} variant="destructive" className="gap-2">
-                  <LogOut className="h-4 w-4" />
-                  Check Out
+                <Button disabled variant="outline" className="gap-2">
+                  <CheckCircle2 className="h-4 w-4" />
+                  Completed for today
                 </Button>
               )}
             </div>
@@ -130,29 +136,29 @@ export default function Attendance() {
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4 mb-8">
         <StatCard
           title={isHR ? "Present Today" : "Days Present"}
-          value={isHR ? "21" : "22"}
-          subtitle={isHR ? "Out of 24 employees" : "This month"}
+          value={presentCount}
+          subtitle={isHR ? "Employees checked in" : "This month"}
           icon={CheckCircle2}
           iconClassName="bg-success/10 text-success"
         />
         <StatCard
           title={isHR ? "Absent Today" : "Days Absent"}
-          value={isHR ? "2" : "0"}
-          subtitle={isHR ? "1 on leave, 1 unexcused" : "This month"}
+          value={absentCount}
+          subtitle={isHR ? "Not checked in" : "This month"}
           icon={XCircle}
           iconClassName="bg-destructive/10 text-destructive"
         />
         <StatCard
-          title={isHR ? "Late Arrivals" : "Late Arrivals"}
-          value={isHR ? "1" : "2"}
-          subtitle={isHR ? "After 9:30 AM" : "This month"}
+          title="Late Arrivals"
+          value={lateCount}
+          subtitle="After 9:30 AM"
           icon={Clock}
           iconClassName="bg-warning/10 text-warning"
         />
         <StatCard
-          title="Avg. Work Hours"
-          value={isHR ? "8.5h" : "8.7h"}
-          subtitle="Per day this month"
+          title="Total Records"
+          value={attendance?.length || 0}
+          subtitle="All time"
           icon={Calendar}
           iconClassName="bg-info/10 text-info"
         />
@@ -166,24 +172,9 @@ export default function Attendance() {
               <SelectValue placeholder="Select month" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="january">January 2024</SelectItem>
-              <SelectItem value="december">December 2023</SelectItem>
-              <SelectItem value="november">November 2023</SelectItem>
+              <SelectItem value="current">{format(new Date(), 'MMMM yyyy')}</SelectItem>
             </SelectContent>
           </Select>
-          {isHR && (
-            <Select>
-              <SelectTrigger className="w-40">
-                <SelectValue placeholder="All Departments" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Departments</SelectItem>
-                <SelectItem value="engineering">Engineering</SelectItem>
-                <SelectItem value="design">Design</SelectItem>
-                <SelectItem value="marketing">Marketing</SelectItem>
-              </SelectContent>
-            </Select>
-          )}
         </div>
         <div className="flex gap-2">
           {isHR && (
@@ -204,37 +195,46 @@ export default function Attendance() {
                 <div className="grid gap-4 py-4">
                   <div className="space-y-2">
                     <Label>Employee</Label>
-                    <Select>
+                    <Select value={manualEntry.userId} onValueChange={(v) => setManualEntry({...manualEntry, userId: v})}>
                       <SelectTrigger>
                         <SelectValue placeholder="Select employee" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="rahul">Rahul Sharma</SelectItem>
-                        <SelectItem value="priya">Priya Patel</SelectItem>
-                        <SelectItem value="amit">Amit Kumar</SelectItem>
-                        <SelectItem value="neha">Neha Singh</SelectItem>
-                        <SelectItem value="vikram">Vikram Reddy</SelectItem>
-                        <SelectItem value="anjali">Anjali Gupta</SelectItem>
+                        {profiles?.map(p => (
+                          <SelectItem key={p.user_id} value={p.user_id}>{p.full_name}</SelectItem>
+                        ))}
                       </SelectContent>
                     </Select>
                   </div>
                   <div className="space-y-2">
                     <Label>Date</Label>
-                    <Input type="date" />
+                    <Input 
+                      type="date" 
+                      value={manualEntry.date}
+                      onChange={(e) => setManualEntry({...manualEntry, date: e.target.value})}
+                    />
                   </div>
                   <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-2">
                       <Label>Check In Time</Label>
-                      <Input type="time" />
+                      <Input 
+                        type="time"
+                        value={manualEntry.checkIn}
+                        onChange={(e) => setManualEntry({...manualEntry, checkIn: e.target.value})}
+                      />
                     </div>
                     <div className="space-y-2">
                       <Label>Check Out Time</Label>
-                      <Input type="time" />
+                      <Input 
+                        type="time"
+                        value={manualEntry.checkOut}
+                        onChange={(e) => setManualEntry({...manualEntry, checkOut: e.target.value})}
+                      />
                     </div>
                   </div>
                   <div className="space-y-2">
                     <Label>Status</Label>
-                    <Select defaultValue="present">
+                    <Select value={manualEntry.status} onValueChange={(v) => setManualEntry({...manualEntry, status: v})}>
                       <SelectTrigger>
                         <SelectValue />
                       </SelectTrigger>
@@ -248,15 +248,19 @@ export default function Attendance() {
                   </div>
                   <div className="space-y-2">
                     <Label>Reason (Optional)</Label>
-                    <Input placeholder="e.g., Machine failure, forgot to punch" />
+                    <Input 
+                      placeholder="e.g., Machine failure, forgot to punch"
+                      value={manualEntry.notes}
+                      onChange={(e) => setManualEntry({...manualEntry, notes: e.target.value})}
+                    />
                   </div>
                 </div>
                 <div className="flex justify-end gap-3">
                   <Button variant="outline" onClick={() => setIsManualEntryOpen(false)}>
                     Cancel
                   </Button>
-                  <Button onClick={handleManualEntry}>
-                    Save Entry
+                  <Button onClick={handleManualEntry} disabled={manualAttendance.isPending}>
+                    {manualAttendance.isPending ? 'Saving...' : 'Save Entry'}
                   </Button>
                 </div>
               </DialogContent>
@@ -267,48 +271,65 @@ export default function Attendance() {
       </div>
 
       {/* Attendance Table */}
-      <DataTable
-        columns={[
-          ...(isHR ? [{
-            key: 'employee',
-            header: 'Employee',
-            render: (record: AttendanceRecord) => (
-              <div className="flex items-center gap-3">
-                <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center">
-                  <span className="text-xs font-medium text-primary">
-                    {record.employee.split(' ').map(n => n[0]).join('')}
-                  </span>
+      {isLoading ? (
+        <div className="space-y-3">
+          {[1, 2, 3, 4, 5].map(i => (
+            <Skeleton key={i} className="h-14" />
+          ))}
+        </div>
+      ) : (
+        <DataTable
+          columns={[
+            ...(isHR ? [{
+              key: 'employee',
+              header: 'Employee',
+              render: (record: typeof attendance[0]) => (
+                <div className="flex items-center gap-3">
+                  <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center">
+                    <span className="text-xs font-medium text-primary">
+                      {record.profile?.full_name?.split(' ').map(n => n[0]).join('') || '?'}
+                    </span>
+                  </div>
+                  <span className="font-medium">{record.profile?.full_name || 'Unknown'}</span>
                 </div>
-                <span className="font-medium">{record.employee}</span>
-              </div>
-            ),
-          }] : []),
-          { key: 'date', header: 'Date' },
-          { key: 'checkIn', header: 'Check In' },
-          { key: 'checkOut', header: 'Check Out' },
-          { key: 'workHours', header: 'Work Hours' },
-          {
-            key: 'status',
-            header: 'Status',
-            render: (record: AttendanceRecord) => {
-              const style = statusStyles[record.status];
-              const Icon = style.icon;
-              return (
-                <div className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium ${style.bg} ${style.color}`}>
-                  <Icon className="h-3.5 w-3.5" />
-                  {style.label}
-                </div>
-              );
+              ),
+            }] : []),
+            { 
+              key: 'date', 
+              header: 'Date',
+              render: (record: typeof attendance[0]) => format(new Date(record.date), 'MMM d, yyyy'),
             },
-          },
-        ]}
-        data={displayRecords}
-        keyExtractor={(record) => record.id}
-        emptyMessage="No attendance records found"
-        currentPage={1}
-        totalPages={3}
-        onPageChange={() => {}}
-      />
+            { 
+              key: 'checkIn', 
+              header: 'Check In',
+              render: (record: typeof attendance[0]) => formatTime(record.check_in),
+            },
+            { 
+              key: 'checkOut', 
+              header: 'Check Out',
+              render: (record: typeof attendance[0]) => formatTime(record.check_out),
+            },
+            {
+              key: 'status',
+              header: 'Status',
+              render: (record: typeof attendance[0]) => {
+                const status = record.status as keyof typeof statusStyles || 'present';
+                const style = statusStyles[status] || statusStyles.present;
+                const Icon = style.icon;
+                return (
+                  <div className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium ${style.bg} ${style.color}`}>
+                    <Icon className="h-3.5 w-3.5" />
+                    {style.label}
+                  </div>
+                );
+              },
+            },
+          ]}
+          data={attendance || []}
+          keyExtractor={(record) => record.id}
+          emptyMessage="No attendance records found"
+        />
+      )}
     </DashboardLayout>
   );
 }
