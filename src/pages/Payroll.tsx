@@ -1,4 +1,4 @@
-import { DollarSign, Download, Calendar, TrendingUp, Wallet } from 'lucide-react';
+import { IndianRupee, Download, Calendar, TrendingUp, Wallet } from 'lucide-react';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { DataTable } from '@/components/ui/data-table';
 import { StatCard } from '@/components/ui/stat-card';
@@ -24,11 +24,11 @@ interface PayrollRecord {
 }
 
 const payrollRecords: PayrollRecord[] = [
-  { id: '1', employee: 'John Smith', department: 'Engineering', baseSalary: '$7,916.67', deductions: '$1,583.33', bonus: '$500', netPay: '$6,833.34', status: 'paid' },
-  { id: '2', employee: 'Emily Davis', department: 'Design', baseSalary: '$6,500.00', deductions: '$1,300.00', bonus: '$0', netPay: '$5,200.00', status: 'paid' },
-  { id: '3', employee: 'Michael Brown', department: 'Marketing', baseSalary: '$7,083.33', deductions: '$1,416.67', bonus: '$300', netPay: '$5,966.66', status: 'processing' },
-  { id: '4', employee: 'Sarah Wilson', department: 'HR', baseSalary: '$5,416.67', deductions: '$1,083.33', bonus: '$0', netPay: '$4,333.34', status: 'pending' },
-  { id: '5', employee: 'David Lee', department: 'Engineering', baseSalary: '$7,666.67', deductions: '$1,533.33', bonus: '$0', netPay: '$6,133.34', status: 'paid' },
+  { id: '1', employee: 'Rahul Sharma', department: 'Engineering', baseSalary: '₹65,000', deductions: '₹8,500', bonus: '₹5,000', netPay: '₹61,500', status: 'paid' },
+  { id: '2', employee: 'Priya Patel', department: 'Design', baseSalary: '₹55,000', deductions: '₹7,200', bonus: '₹0', netPay: '₹47,800', status: 'paid' },
+  { id: '3', employee: 'Amit Kumar', department: 'Marketing', baseSalary: '₹58,000', deductions: '₹7,500', bonus: '₹3,000', netPay: '₹53,500', status: 'processing' },
+  { id: '4', employee: 'Neha Singh', department: 'HR', baseSalary: '₹45,000', deductions: '₹5,800', bonus: '₹0', netPay: '₹39,200', status: 'pending' },
+  { id: '5', employee: 'Vikram Reddy', department: 'Engineering', baseSalary: '₹62,000', deductions: '₹8,100', bonus: '₹0', netPay: '₹53,900', status: 'paid' },
 ];
 
 const statusStyles = {
@@ -42,7 +42,7 @@ export default function Payroll() {
   const isHR = user?.role === 'hr';
 
   // For employee view, show only their record
-  const myPayroll = payrollRecords.find(r => r.employee === 'John Smith');
+  const myPayroll = payrollRecords.find(r => r.employee === 'Rahul Sharma');
   const displayRecords = isHR ? payrollRecords : (myPayroll ? [myPayroll] : []);
 
   return (
@@ -56,28 +56,28 @@ export default function Payroll() {
           <>
             <StatCard
               title="Total Payroll"
-              value="$425,000"
+              value="₹12,50,000"
               subtitle="January 2024"
-              icon={DollarSign}
+              icon={IndianRupee}
               trend={{ value: 3.2, isPositive: true }}
             />
             <StatCard
               title="Processed"
-              value="142"
-              subtitle="Out of 156 employees"
+              value="22"
+              subtitle="Out of 24 employees"
               icon={TrendingUp}
               iconClassName="bg-success/10 text-success"
             />
             <StatCard
               title="Pending"
-              value="14"
+              value="2"
               subtitle="Awaiting approval"
               icon={Calendar}
               iconClassName="bg-warning/10 text-warning"
             />
             <StatCard
               title="Total Bonus"
-              value="$12,500"
+              value="₹45,000"
               subtitle="This month"
               icon={Wallet}
               iconClassName="bg-info/10 text-info"
@@ -87,27 +87,27 @@ export default function Payroll() {
           <>
             <StatCard
               title="Net Salary"
-              value="$6,833.34"
+              value="₹61,500"
               subtitle="January 2024"
-              icon={DollarSign}
+              icon={IndianRupee}
             />
             <StatCard
               title="Base Salary"
-              value="$7,916.67"
+              value="₹65,000"
               subtitle="Monthly"
               icon={Wallet}
               iconClassName="bg-info/10 text-info"
             />
             <StatCard
               title="Deductions"
-              value="$1,583.33"
-              subtitle="Tax & benefits"
+              value="₹8,500"
+              subtitle="Tax & PF"
               icon={TrendingUp}
               iconClassName="bg-warning/10 text-warning"
             />
             <StatCard
               title="Bonus"
-              value="$500"
+              value="₹5,000"
               subtitle="Performance bonus"
               icon={Calendar}
               iconClassName="bg-success/10 text-success"
@@ -123,26 +123,26 @@ export default function Payroll() {
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
             <div className="p-4 rounded-lg bg-muted/50">
               <p className="text-sm text-muted-foreground">Basic Salary</p>
-              <p className="text-xl font-semibold mt-1">$6,000.00</p>
+              <p className="text-xl font-semibold mt-1">₹45,000</p>
             </div>
             <div className="p-4 rounded-lg bg-muted/50">
-              <p className="text-sm text-muted-foreground">Housing Allowance</p>
-              <p className="text-xl font-semibold mt-1">$1,200.00</p>
+              <p className="text-sm text-muted-foreground">HRA</p>
+              <p className="text-xl font-semibold mt-1">₹12,000</p>
             </div>
             <div className="p-4 rounded-lg bg-muted/50">
-              <p className="text-sm text-muted-foreground">Transport Allowance</p>
-              <p className="text-xl font-semibold mt-1">$500.00</p>
+              <p className="text-sm text-muted-foreground">Travel Allowance</p>
+              <p className="text-xl font-semibold mt-1">₹5,000</p>
             </div>
             <div className="p-4 rounded-lg bg-muted/50">
-              <p className="text-sm text-muted-foreground">Other Benefits</p>
-              <p className="text-xl font-semibold mt-1">$216.67</p>
+              <p className="text-sm text-muted-foreground">Special Allowance</p>
+              <p className="text-xl font-semibold mt-1">₹3,000</p>
             </div>
           </div>
           <div className="mt-4 pt-4 border-t border-border">
             <div className="flex justify-between items-center">
               <div>
                 <p className="text-sm text-muted-foreground">Year-to-Date Earnings</p>
-                <p className="text-2xl font-semibold text-primary mt-1">$6,833.34</p>
+                <p className="text-2xl font-semibold text-primary mt-1">₹61,500</p>
               </div>
               <Button variant="outline">
                 <Download className="h-4 w-4 mr-2" />
