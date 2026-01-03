@@ -41,22 +41,38 @@ interface Employee {
   phone: string;
   department: string;
   position: string;
+  role: 'employee' | 'intern';
   joinDate: string;
   status: 'active' | 'inactive';
   salary: string;
   checkIn?: string;
   checkOut?: string;
-  attendanceStatus?: 'present' | 'absent' | 'half-day' | 'leave';
+  attendanceStatus?: 'present' | 'absent' | 'leave';
+  remainingAnnualLeave: number;
+  remainingSickLeave: number;
 }
 
 const employees: Employee[] = [
-  { id: 'EMP001', name: 'John Smith', email: 'john.smith@company.com', phone: '+1 234 567 890', department: 'Engineering', position: 'Senior Developer', joinDate: 'Jan 15, 2022', status: 'active', salary: '$95,000', checkIn: '09:00 AM', checkOut: '06:15 PM', attendanceStatus: 'present' },
-  { id: 'EMP002', name: 'Emily Davis', email: 'emily.davis@company.com', phone: '+1 234 567 891', department: 'Design', position: 'UI/UX Designer', joinDate: 'Mar 20, 2022', status: 'active', salary: '$78,000', checkIn: '09:30 AM', checkOut: '06:00 PM', attendanceStatus: 'present' },
-  { id: 'EMP003', name: 'Michael Brown', email: 'michael.brown@company.com', phone: '+1 234 567 892', department: 'Marketing', position: 'Marketing Manager', joinDate: 'Jun 10, 2021', status: 'active', salary: '$85,000', checkIn: '10:15 AM', checkOut: '--', attendanceStatus: 'half-day' },
-  { id: 'EMP004', name: 'Sarah Wilson', email: 'sarah.wilson@company.com', phone: '+1 234 567 893', department: 'HR', position: 'HR Specialist', joinDate: 'Sep 5, 2023', status: 'active', salary: '$65,000', checkIn: '--', checkOut: '--', attendanceStatus: 'leave' },
-  { id: 'EMP005', name: 'David Lee', email: 'david.lee@company.com', phone: '+1 234 567 894', department: 'Engineering', position: 'DevOps Engineer', joinDate: 'Nov 12, 2022', status: 'inactive', salary: '$92,000', checkIn: '--', checkOut: '--', attendanceStatus: 'absent' },
-  { id: 'EMP006', name: 'Jennifer Martinez', email: 'jennifer.m@company.com', phone: '+1 234 567 895', department: 'Sales', position: 'Sales Executive', joinDate: 'Feb 28, 2023', status: 'active', salary: '$72,000', checkIn: '08:45 AM', checkOut: '05:30 PM', attendanceStatus: 'present' },
+  { id: 'EMP001', name: 'John Smith', email: 'john.smith@company.com', phone: '+1 234 567 890', department: 'Engineering', position: 'Senior Developer', role: 'employee', joinDate: 'Jan 15, 2022', status: 'active', salary: '$95,000', checkIn: '09:00 AM', checkOut: '06:15 PM', attendanceStatus: 'present', remainingAnnualLeave: 12, remainingSickLeave: 8 },
+  { id: 'EMP002', name: 'Emily Davis', email: 'emily.davis@company.com', phone: '+1 234 567 891', department: 'Design', position: 'UI/UX Designer', role: 'employee', joinDate: 'Mar 20, 2022', status: 'active', salary: '$78,000', checkIn: '09:30 AM', checkOut: '06:00 PM', attendanceStatus: 'present', remainingAnnualLeave: 15, remainingSickLeave: 10 },
+  { id: 'EMP003', name: 'Michael Brown', email: 'michael.brown@company.com', phone: '+1 234 567 892', department: 'Marketing', position: 'Marketing Manager', role: 'employee', joinDate: 'Jun 10, 2021', status: 'active', salary: '$85,000', checkIn: '10:15 AM', checkOut: '--', attendanceStatus: 'present', remainingAnnualLeave: 8, remainingSickLeave: 6 },
+  { id: 'EMP004', name: 'Sarah Wilson', email: 'sarah.wilson@company.com', phone: '+1 234 567 893', department: 'HR', position: 'HR Specialist', role: 'employee', joinDate: 'Sep 5, 2023', status: 'active', salary: '$65,000', checkIn: '--', checkOut: '--', attendanceStatus: 'leave', remainingAnnualLeave: 18, remainingSickLeave: 10 },
+  { id: 'EMP005', name: 'David Lee', email: 'david.lee@company.com', phone: '+1 234 567 894', department: 'Engineering', position: 'DevOps Engineer', role: 'intern', joinDate: 'Nov 12, 2022', status: 'inactive', salary: '$92,000', checkIn: '--', checkOut: '--', attendanceStatus: 'absent', remainingAnnualLeave: 5, remainingSickLeave: 3 },
+  { id: 'EMP006', name: 'Jennifer Martinez', email: 'jennifer.m@company.com', phone: '+1 234 567 895', department: 'Sales', position: 'Sales Executive', role: 'employee', joinDate: 'Feb 28, 2023', status: 'active', salary: '$72,000', checkIn: '08:45 AM', checkOut: '05:30 PM', attendanceStatus: 'present', remainingAnnualLeave: 10, remainingSickLeave: 7 },
 ];
+
+const getStatusIndicatorColor = (status?: 'present' | 'absent' | 'leave') => {
+  switch (status) {
+    case 'present':
+      return 'bg-green-500';
+    case 'absent':
+      return 'bg-red-500';
+    case 'leave':
+      return 'bg-yellow-500';
+    default:
+      return 'bg-muted';
+  }
+};
 
 const getAttendanceStatusColor = (status?: string) => {
   switch (status) {
@@ -64,10 +80,8 @@ const getAttendanceStatusColor = (status?: string) => {
       return 'bg-green-100 text-green-700 border-green-200';
     case 'absent':
       return 'bg-red-100 text-red-700 border-red-200';
-    case 'half-day':
-      return 'bg-yellow-100 text-yellow-700 border-yellow-200';
     case 'leave':
-      return 'bg-blue-100 text-blue-700 border-blue-200';
+      return 'bg-yellow-100 text-yellow-700 border-yellow-200';
     default:
       return 'bg-muted text-muted-foreground';
   }
@@ -163,13 +177,13 @@ export default function Employees() {
               </div>
               <div className="space-y-2">
                 <Label htmlFor="role">Role</Label>
-                <Select>
+                <Select defaultValue="employee">
                   <SelectTrigger>
                     <SelectValue placeholder="Select role" />
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="employee">Employee</SelectItem>
-                    <SelectItem value="hr">HR</SelectItem>
+                    <SelectItem value="intern">Intern</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -198,6 +212,14 @@ export default function Employees() {
                     checked={selectedEmployees.includes(emp.id)}
                     onCheckedChange={() => toggleEmployeeSelection(emp.id)}
                     className="data-[state=checked]:bg-primary"
+                  />
+                </div>
+
+                {/* Status Indicator */}
+                <div className="absolute top-3 left-3 z-10">
+                  <div 
+                    className={`h-3 w-3 rounded-full ${getStatusIndicatorColor(emp.attendanceStatus)} ring-2 ring-background shadow-sm`}
+                    title={emp.attendanceStatus === 'present' ? 'Present' : emp.attendanceStatus === 'absent' ? 'Absent' : 'On Leave'}
                   />
                 </div>
 
@@ -282,6 +304,21 @@ export default function Employees() {
                       <p className="text-sm font-semibold text-red-700 dark:text-red-300">
                         {emp.checkOut || '--'}
                       </p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Leave Balance */}
+                <div className="pt-2 border-t space-y-2">
+                  <p className="text-sm font-medium text-muted-foreground">Leave Balance</p>
+                  <div className="grid grid-cols-2 gap-2 text-sm">
+                    <div className="bg-muted/50 rounded p-2">
+                      <span className="text-muted-foreground text-xs">Annual</span>
+                      <p className="font-semibold">{emp.remainingAnnualLeave} days</p>
+                    </div>
+                    <div className="bg-muted/50 rounded p-2">
+                      <span className="text-muted-foreground text-xs">Sick</span>
+                      <p className="font-semibold">{emp.remainingSickLeave} days</p>
                     </div>
                   </div>
                 </div>
