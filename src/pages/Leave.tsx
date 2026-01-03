@@ -6,7 +6,7 @@ import { StatCard } from '@/components/ui/stat-card';
 import { StatusBadge } from '@/components/ui/status-badge';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/contexts/AuthContext';
-import { useLeaveRequests, useCreateLeaveRequest, useUpdateLeaveStatus } from '@/hooks/useLeaveRequests';
+import { useLeaveRequests, useCreateLeaveRequest, useUpdateLeaveStatus, LeaveRequest } from '@/hooks/useLeaveRequests';
 import { useMyProfile } from '@/hooks/useProfiles';
 import { format, differenceInDays } from 'date-fns';
 import {
@@ -243,7 +243,7 @@ export default function Leave() {
             ...(isHR ? [{
               key: 'employee',
               header: 'Employee',
-              render: (request: typeof leaveRequests[0]) => (
+              render: (request: LeaveRequest) => (
                 <div className="flex items-center gap-3">
                   <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center">
                     <span className="text-xs font-medium text-primary">
@@ -263,14 +263,14 @@ export default function Leave() {
             {
               key: 'dates',
               header: 'Dates',
-              render: (request: typeof leaveRequests[0]) => (
+              render: (request: LeaveRequest) => (
                 <span>{format(new Date(request.start_date), 'MMM d')} - {format(new Date(request.end_date), 'MMM d')}</span>
               ),
             },
             {
               key: 'days',
               header: 'Days',
-              render: (request: typeof leaveRequests[0]) => (
+              render: (request: LeaveRequest) => (
                 <span className="font-medium">{request.days} day{request.days > 1 ? 's' : ''}</span>
               ),
             },
@@ -278,19 +278,19 @@ export default function Leave() {
             {
               key: 'appliedOn',
               header: 'Applied On',
-              render: (request: typeof leaveRequests[0]) => format(new Date(request.created_at), 'MMM d'),
+              render: (request: LeaveRequest) => format(new Date(request.created_at), 'MMM d'),
             },
             {
               key: 'status',
               header: 'Status',
-              render: (request: typeof leaveRequests[0]) => (
+              render: (request: LeaveRequest) => (
                 <StatusBadge status={request.status as 'pending' | 'approved' | 'rejected'} />
               ),
             },
             ...(isHR ? [{
               key: 'actions',
               header: 'Actions',
-              render: (request: typeof leaveRequests[0]) => request.status === 'pending' ? (
+              render: (request: LeaveRequest) => request.status === 'pending' ? (
                 <div className="flex gap-2">
                   <Button 
                     size="sm" 
