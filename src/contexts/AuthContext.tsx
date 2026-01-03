@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState, ReactNode } from 'react';
 
-export type UserRole = 'admin' | 'employee';
+export type UserRole = 'hr' | 'employee';
 
 export interface User {
   id: string;
@@ -23,11 +23,11 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 const mockUsers: Record<string, User> = {
-  'admin@company.com': {
+  'hr@company.com': {
     id: '1',
     name: 'Sarah Johnson',
-    email: 'admin@company.com',
-    role: 'admin',
+    email: 'hr@company.com',
+    role: 'hr',
     department: 'Human Resources',
     position: 'HR Manager',
   },

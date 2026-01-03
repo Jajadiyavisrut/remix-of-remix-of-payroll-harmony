@@ -41,43 +41,43 @@ const statusStyles = {
 
 export default function Attendance() {
   const { user } = useAuth();
-  const isAdmin = user?.role === 'admin';
+  const isHR = user?.role === 'hr';
   const [selectedMonth, setSelectedMonth] = useState('january');
 
   const myAttendance = attendanceRecords.filter(r => r.employee === 'John Smith');
-  const displayRecords = isAdmin ? attendanceRecords : myAttendance;
+  const displayRecords = isHR ? attendanceRecords : myAttendance;
 
   return (
     <DashboardLayout 
       title="Attendance" 
-      subtitle={isAdmin ? "Track team attendance and work hours" : "View your attendance records"}
+      subtitle={isHR ? "Track team attendance and work hours" : "View your attendance records"}
     >
       {/* Stats */}
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4 mb-8">
         <StatCard
-          title={isAdmin ? "Present Today" : "Days Present"}
-          value={isAdmin ? "147" : "22"}
-          subtitle={isAdmin ? "Out of 156 employees" : "This month"}
+          title={isHR ? "Present Today" : "Days Present"}
+          value={isHR ? "147" : "22"}
+          subtitle={isHR ? "Out of 156 employees" : "This month"}
           icon={CheckCircle2}
           iconClassName="bg-success/10 text-success"
         />
         <StatCard
-          title={isAdmin ? "Absent Today" : "Days Absent"}
-          value={isAdmin ? "5" : "0"}
-          subtitle={isAdmin ? "3 on leave, 2 unexcused" : "This month"}
+          title={isHR ? "Absent Today" : "Days Absent"}
+          value={isHR ? "5" : "0"}
+          subtitle={isHR ? "3 on leave, 2 unexcused" : "This month"}
           icon={XCircle}
           iconClassName="bg-destructive/10 text-destructive"
         />
         <StatCard
-          title={isAdmin ? "Late Arrivals" : "Late Arrivals"}
-          value={isAdmin ? "4" : "2"}
-          subtitle={isAdmin ? "After 9:30 AM" : "This month"}
+          title={isHR ? "Late Arrivals" : "Late Arrivals"}
+          value={isHR ? "4" : "2"}
+          subtitle={isHR ? "After 9:30 AM" : "This month"}
           icon={Clock}
           iconClassName="bg-warning/10 text-warning"
         />
         <StatCard
           title="Avg. Work Hours"
-          value={isAdmin ? "8.5h" : "8.7h"}
+          value={isHR ? "8.5h" : "8.7h"}
           subtitle="Per day this month"
           icon={Calendar}
           iconClassName="bg-info/10 text-info"
@@ -97,7 +97,7 @@ export default function Attendance() {
               <SelectItem value="november">November 2023</SelectItem>
             </SelectContent>
           </Select>
-          {isAdmin && (
+          {isHR && (
             <Select>
               <SelectTrigger className="w-40">
                 <SelectValue placeholder="All Departments" />
@@ -117,7 +117,7 @@ export default function Attendance() {
       {/* Attendance Table */}
       <DataTable
         columns={[
-          ...(isAdmin ? [{
+          ...(isHR ? [{
             key: 'employee',
             header: 'Employee',
             render: (record: AttendanceRecord) => (

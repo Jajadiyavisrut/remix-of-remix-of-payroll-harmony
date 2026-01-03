@@ -49,11 +49,11 @@ const leaveRequests: LeaveRequest[] = [
 export default function Leave() {
   const { user } = useAuth();
   const { toast } = useToast();
-  const isAdmin = user?.role === 'admin';
+  const isHR = user?.role === 'hr';
   const [isDialogOpen, setIsDialogOpen] = useState(false);
 
   const myLeaves = leaveRequests.filter(r => r.employee === 'John Smith');
-  const displayRequests = isAdmin ? leaveRequests : myLeaves;
+  const displayRequests = isHR ? leaveRequests : myLeaves;
   const pendingCount = leaveRequests.filter(r => r.status === 'pending').length;
 
   const handleApprove = (id: string) => {
@@ -74,11 +74,11 @@ export default function Leave() {
   return (
     <DashboardLayout 
       title="Leave Management" 
-      subtitle={isAdmin ? "Review and manage leave requests" : "Request and track your leaves"}
+      subtitle={isHR ? "Review and manage leave requests" : "Request and track your leaves"}
     >
       {/* Stats */}
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4 mb-8">
-        {isAdmin ? (
+        {isHR ? (
           <>
             <StatCard
               title="Pending Requests"
@@ -168,7 +168,7 @@ export default function Leave() {
           </Select>
         </div>
         
-        {!isAdmin && (
+        {!isHR && (
           <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
             <DialogTrigger asChild>
               <Button>
@@ -235,7 +235,7 @@ export default function Leave() {
       {/* Leave Requests Table */}
       <DataTable
         columns={[
-          ...(isAdmin ? [{
+          ...(isHR ? [{
             key: 'employee',
             header: 'Employee',
             render: (request: LeaveRequest) => (
@@ -271,7 +271,7 @@ export default function Leave() {
             header: 'Status',
             render: (request: LeaveRequest) => <StatusBadge status={request.status} />,
           },
-          ...(isAdmin ? [{
+          ...(isHR ? [{
             key: 'actions',
             header: 'Actions',
             render: (request: LeaveRequest) => request.status === 'pending' ? (

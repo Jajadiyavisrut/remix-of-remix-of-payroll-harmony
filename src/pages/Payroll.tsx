@@ -39,20 +39,20 @@ const statusStyles = {
 
 export default function Payroll() {
   const { user } = useAuth();
-  const isAdmin = user?.role === 'admin';
+  const isHR = user?.role === 'hr';
 
   // For employee view, show only their record
   const myPayroll = payrollRecords.find(r => r.employee === 'John Smith');
-  const displayRecords = isAdmin ? payrollRecords : (myPayroll ? [myPayroll] : []);
+  const displayRecords = isHR ? payrollRecords : (myPayroll ? [myPayroll] : []);
 
   return (
     <DashboardLayout 
       title="Payroll" 
-      subtitle={isAdmin ? "Manage employee salaries and payments" : "View your salary details"}
+      subtitle={isHR ? "Manage employee salaries and payments" : "View your salary details"}
     >
       {/* Stats */}
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4 mb-8">
-        {isAdmin ? (
+        {isHR ? (
           <>
             <StatCard
               title="Total Payroll"
@@ -117,7 +117,7 @@ export default function Payroll() {
       </div>
 
       {/* Salary Breakdown for Employee */}
-      {!isAdmin && (
+      {!isHR && (
         <div className="bg-card rounded-xl border border-border p-6 mb-6">
           <h3 className="text-lg font-semibold mb-4">Salary Breakdown</h3>
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
@@ -154,7 +154,7 @@ export default function Payroll() {
       )}
 
       {/* Filters for Admin */}
-      {isAdmin && (
+      {isHR && (
         <div className="flex flex-col sm:flex-row gap-4 justify-between mb-6">
           <div className="flex items-center gap-3">
             <Select defaultValue="january">
@@ -228,7 +228,7 @@ export default function Payroll() {
               </span>
             ),
           },
-          ...(isAdmin ? [{
+          ...(isHR ? [{
             key: 'actions',
             header: '',
             render: () => (
