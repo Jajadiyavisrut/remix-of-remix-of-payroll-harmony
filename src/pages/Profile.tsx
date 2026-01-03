@@ -92,20 +92,24 @@ export default function Profile() {
             <h3 className="font-semibold mb-4">Quick Stats</h3>
             <div className="space-y-4">
               <div className="flex justify-between items-center">
-                <span className="text-muted-foreground text-sm">Leave Balance</span>
-                <span className="font-medium">18 days</span>
+                <span className="text-muted-foreground text-sm">Remaining Annual Leave</span>
+                <span className="font-medium text-primary">12 days</span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-muted-foreground text-sm">Remaining Sick Leave</span>
+                <span className="font-medium text-info">8 days</span>
               </div>
               <div className="flex justify-between items-center">
                 <span className="text-muted-foreground text-sm">Attendance Rate</span>
                 <span className="font-medium text-success">96%</span>
               </div>
               <div className="flex justify-between items-center">
-                <span className="text-muted-foreground text-sm">Projects</span>
-                <span className="font-medium">5 active</span>
+                <span className="text-muted-foreground text-sm">Days Present</span>
+                <span className="font-medium">22 days</span>
               </div>
               <div className="flex justify-between items-center">
-                <span className="text-muted-foreground text-sm">Team Size</span>
-                <span className="font-medium">12 members</span>
+                <span className="text-muted-foreground text-sm">Days Absent</span>
+                <span className="font-medium">0 days</span>
               </div>
             </div>
           </div>

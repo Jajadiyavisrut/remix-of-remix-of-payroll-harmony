@@ -36,14 +36,16 @@ interface LeaveRequest {
   reason: string;
   status: 'approved' | 'pending' | 'rejected';
   appliedOn: string;
+  remainingAnnualLeave: number;
+  remainingSickLeave: number;
 }
 
 const leaveRequests: LeaveRequest[] = [
-  { id: '1', employee: 'John Smith', type: 'Vacation', startDate: 'Jan 15', endDate: 'Jan 20', days: 5, reason: 'Family vacation', status: 'pending', appliedOn: 'Jan 5' },
-  { id: '2', employee: 'Emily Davis', type: 'Sick Leave', startDate: 'Jan 10', endDate: 'Jan 10', days: 1, reason: 'Medical appointment', status: 'approved', appliedOn: 'Jan 9' },
-  { id: '3', employee: 'Michael Brown', type: 'Personal', startDate: 'Jan 12', endDate: 'Jan 13', days: 2, reason: 'Personal matters', status: 'rejected', appliedOn: 'Jan 8' },
-  { id: '4', employee: 'Sarah Wilson', type: 'Vacation', startDate: 'Jan 22', endDate: 'Jan 25', days: 4, reason: 'Travel plans', status: 'pending', appliedOn: 'Jan 10' },
-  { id: '5', employee: 'David Lee', type: 'Sick Leave', startDate: 'Jan 8', endDate: 'Jan 9', days: 2, reason: 'Flu', status: 'approved', appliedOn: 'Jan 7' },
+  { id: '1', employee: 'John Smith', type: 'Vacation', startDate: 'Jan 15', endDate: 'Jan 20', days: 5, reason: 'Family vacation', status: 'pending', appliedOn: 'Jan 5', remainingAnnualLeave: 12, remainingSickLeave: 8 },
+  { id: '2', employee: 'Emily Davis', type: 'Sick Leave', startDate: 'Jan 10', endDate: 'Jan 10', days: 1, reason: 'Medical appointment', status: 'approved', appliedOn: 'Jan 9', remainingAnnualLeave: 15, remainingSickLeave: 9 },
+  { id: '3', employee: 'Michael Brown', type: 'Personal', startDate: 'Jan 12', endDate: 'Jan 13', days: 2, reason: 'Personal matters', status: 'rejected', appliedOn: 'Jan 8', remainingAnnualLeave: 8, remainingSickLeave: 6 },
+  { id: '4', employee: 'Sarah Wilson', type: 'Vacation', startDate: 'Jan 22', endDate: 'Jan 25', days: 4, reason: 'Travel plans', status: 'pending', appliedOn: 'Jan 10', remainingAnnualLeave: 18, remainingSickLeave: 10 },
+  { id: '5', employee: 'David Lee', type: 'Sick Leave', startDate: 'Jan 8', endDate: 'Jan 9', days: 2, reason: 'Flu', status: 'approved', appliedOn: 'Jan 7', remainingAnnualLeave: 5, remainingSickLeave: 1 },
 ];
 
 export default function Leave() {
@@ -51,10 +53,17 @@ export default function Leave() {
   const { toast } = useToast();
   const isHR = user?.role === 'hr';
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [statusFilter, setStatusFilter] = useState<string>('all');
 
   const myLeaves = leaveRequests.filter(r => r.employee === 'John Smith');
-  const displayRequests = isHR ? leaveRequests : myLeaves;
+  const baseRequests = isHR ? leaveRequests : myLeaves;
+  const displayRequests = statusFilter === 'all' 
+    ? baseRequests 
+    : baseRequests.filter(r => r.status === statusFilter);
+  
   const pendingCount = leaveRequests.filter(r => r.status === 'pending').length;
+  const approvedCount = leaveRequests.filter(r => r.status === 'approved').length;
+  const rejectedCount = leaveRequests.filter(r => r.status === 'rejected').length;
 
   const handleApprove = (id: string) => {
     toast({
@@ -111,15 +120,15 @@ export default function Leave() {
         ) : (
           <>
             <StatCard
-              title="Annual Leave"
-              value="18 days"
-              subtitle="Remaining balance"
+              title="Remaining Annual Leave"
+              value="12 days"
+              subtitle="Out of 20 days"
               icon={Calendar}
             />
             <StatCard
-              title="Sick Leave"
-              value="10 days"
-              subtitle="Remaining balance"
+              title="Remaining Sick Leave"
+              value="8 days"
+              subtitle="Out of 10 days"
               icon={FileText}
               iconClassName="bg-info/10 text-info"
             />
@@ -144,15 +153,15 @@ export default function Leave() {
       {/* Actions */}
       <div className="flex flex-col sm:flex-row gap-4 justify-between mb-6">
         <div className="flex items-center gap-3">
-          <Select defaultValue="all">
+          <Select value={statusFilter} onValueChange={setStatusFilter}>
             <SelectTrigger className="w-40">
               <SelectValue placeholder="Filter status" />
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">All Status</SelectItem>
-              <SelectItem value="pending">Pending</SelectItem>
-              <SelectItem value="approved">Approved</SelectItem>
-              <SelectItem value="rejected">Rejected</SelectItem>
+              <SelectItem value="pending">Pending ({pendingCount})</SelectItem>
+              <SelectItem value="approved">Approved ({approvedCount})</SelectItem>
+              <SelectItem value="rejected">Rejected ({rejectedCount})</SelectItem>
             </SelectContent>
           </Select>
           <Select defaultValue="all">
@@ -245,7 +254,12 @@ export default function Leave() {
                     {request.employee.split(' ').map(n => n[0]).join('')}
                   </span>
                 </div>
-                <span className="font-medium">{request.employee}</span>
+                <div>
+                  <span className="font-medium block">{request.employee}</span>
+                  <span className="text-xs text-muted-foreground">
+                    Annual: {request.remainingAnnualLeave}d | Sick: {request.remainingSickLeave}d
+                  </span>
+                </div>
               </div>
             ),
           }] : []),

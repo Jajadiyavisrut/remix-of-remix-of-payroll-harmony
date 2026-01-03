@@ -1,16 +1,25 @@
-import { Users, DollarSign, Calendar, FileText, TrendingUp, Clock } from 'lucide-react';
+import { useState } from 'react';
+import { Users, DollarSign, Calendar, FileText, TrendingUp, Clock, CheckCircle, XCircle } from 'lucide-react';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { StatCard } from '@/components/ui/stat-card';
 import { StatusBadge } from '@/components/ui/status-badge';
 import { DataTable } from '@/components/ui/data-table';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 
 const recentLeaveRequests = [
-  { id: '1', employee: 'John Smith', type: 'Vacation', dates: 'Jan 15 - Jan 20', status: 'pending' as const },
-  { id: '2', employee: 'Emily Davis', type: 'Sick Leave', dates: 'Jan 10', status: 'approved' as const },
-  { id: '3', employee: 'Michael Brown', type: 'Personal', dates: 'Jan 12 - Jan 13', status: 'rejected' as const },
-  { id: '4', employee: 'Sarah Wilson', type: 'Vacation', dates: 'Jan 22 - Jan 25', status: 'pending' as const },
+  { id: '1', employee: 'John Smith', type: 'Vacation', dates: 'Jan 15 - Jan 20', status: 'pending' as const, remainingAnnual: 12, remainingSick: 8 },
+  { id: '2', employee: 'Emily Davis', type: 'Sick Leave', dates: 'Jan 10', status: 'approved' as const, remainingAnnual: 15, remainingSick: 9 },
+  { id: '3', employee: 'Michael Brown', type: 'Personal', dates: 'Jan 12 - Jan 13', status: 'rejected' as const, remainingAnnual: 8, remainingSick: 6 },
+  { id: '4', employee: 'Sarah Wilson', type: 'Vacation', dates: 'Jan 22 - Jan 25', status: 'pending' as const, remainingAnnual: 18, remainingSick: 10 },
+  { id: '5', employee: 'David Lee', type: 'Sick Leave', dates: 'Jan 8 - Jan 9', status: 'approved' as const, remainingAnnual: 5, remainingSick: 1 },
 ];
 
 const upcomingPayroll = [
@@ -21,6 +30,16 @@ const upcomingPayroll = [
 export default function Dashboard() {
   const { user } = useAuth();
   const isHR = user?.role === 'hr';
+  const [leaveFilter, setLeaveFilter] = useState<string>('all');
+
+  const pendingCount = recentLeaveRequests.filter(r => r.status === 'pending').length;
+  const approvedCount = recentLeaveRequests.filter(r => r.status === 'approved').length;
+  const rejectedCount = recentLeaveRequests.filter(r => r.status === 'rejected').length;
+  const totalCount = recentLeaveRequests.length;
+
+  const filteredLeaveRequests = leaveFilter === 'all' 
+    ? recentLeaveRequests 
+    : recentLeaveRequests.filter(r => r.status === leaveFilter);
 
   return (
     <DashboardLayout 
@@ -48,7 +67,7 @@ export default function Dashboard() {
             />
             <StatCard
               title="Pending Leaves"
-              value="12"
+              value={pendingCount}
               subtitle="Requires attention"
               icon={FileText}
               iconClassName="bg-warning/10 text-warning"
@@ -65,9 +84,9 @@ export default function Dashboard() {
         ) : (
           <>
             <StatCard
-              title="Leave Balance"
-              value="18 days"
-              subtitle="Annual leave remaining"
+              title="Remaining Annual Leave"
+              value="12 days"
+              subtitle="Out of 20 days"
               icon={Calendar}
             />
             <StatCard
@@ -96,27 +115,76 @@ export default function Dashboard() {
       </div>
 
       <div className="grid gap-6 lg:grid-cols-2">
-        {/* Recent Leave Requests */}
+        {/* Leave Requests Widget */}
         <div className="bg-card rounded-xl border border-border p-6">
           <div className="flex items-center justify-between mb-4">
             <div>
               <h3 className="text-lg font-semibold">Leave Requests</h3>
               <p className="text-sm text-muted-foreground">Recent leave applications</p>
             </div>
-            <Button variant="outline" size="sm">View All</Button>
+            <div className="flex items-center gap-2">
+              {isHR && (
+                <Select value={leaveFilter} onValueChange={setLeaveFilter}>
+                  <SelectTrigger className="w-32 h-8 text-xs">
+                    <SelectValue placeholder="Filter" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All ({totalCount})</SelectItem>
+                    <SelectItem value="pending">Pending ({pendingCount})</SelectItem>
+                    <SelectItem value="approved">Approved ({approvedCount})</SelectItem>
+                    <SelectItem value="rejected">Rejected ({rejectedCount})</SelectItem>
+                  </SelectContent>
+                </Select>
+              )}
+              <Button variant="outline" size="sm">View All</Button>
+            </div>
           </div>
+
+          {/* Leave Stats Summary for HR */}
+          {isHR && (
+            <div className="grid grid-cols-4 gap-2 mb-4">
+              <div className="bg-muted/50 rounded-lg p-3 text-center">
+                <p className="text-lg font-bold">{totalCount}</p>
+                <p className="text-xs text-muted-foreground">Total</p>
+              </div>
+              <div className="bg-warning/10 rounded-lg p-3 text-center">
+                <p className="text-lg font-bold text-warning">{pendingCount}</p>
+                <p className="text-xs text-muted-foreground">Pending</p>
+              </div>
+              <div className="bg-success/10 rounded-lg p-3 text-center">
+                <p className="text-lg font-bold text-success">{approvedCount}</p>
+                <p className="text-xs text-muted-foreground">Approved</p>
+              </div>
+              <div className="bg-destructive/10 rounded-lg p-3 text-center">
+                <p className="text-lg font-bold text-destructive">{rejectedCount}</p>
+                <p className="text-xs text-muted-foreground">Rejected</p>
+              </div>
+            </div>
+          )}
+
           <DataTable
             columns={[
-              { key: 'employee', header: 'Employee' },
+              ...(isHR ? [{
+                key: 'employee',
+                header: 'Employee',
+                render: (item: typeof recentLeaveRequests[0]) => (
+                  <div>
+                    <span className="font-medium block">{item.employee}</span>
+                    <span className="text-xs text-muted-foreground">
+                      Annual: {item.remainingAnnual}d | Sick: {item.remainingSick}d
+                    </span>
+                  </div>
+                ),
+              }] : [{ key: 'employee', header: 'Employee' }]),
               { key: 'type', header: 'Type' },
               { key: 'dates', header: 'Dates' },
               {
                 key: 'status',
                 header: 'Status',
-                render: (item) => <StatusBadge status={item.status} />,
+                render: (item: typeof recentLeaveRequests[0]) => <StatusBadge status={item.status} />,
               },
             ]}
-            data={recentLeaveRequests}
+            data={filteredLeaveRequests}
             keyExtractor={(item) => item.id}
           />
         </div>

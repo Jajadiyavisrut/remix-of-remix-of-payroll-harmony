@@ -1,10 +1,11 @@
 import { useState } from 'react';
-import { Calendar, Clock, CheckCircle2, XCircle, MinusCircle } from 'lucide-react';
+import { Calendar, Clock, CheckCircle2, XCircle, MinusCircle, LogIn, LogOut, UserPlus } from 'lucide-react';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { DataTable } from '@/components/ui/data-table';
 import { StatCard } from '@/components/ui/stat-card';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/contexts/AuthContext';
+import { useToast } from '@/hooks/use-toast';
 import {
   Select,
   SelectContent,
@@ -12,6 +13,16 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from '@/components/ui/dialog';
+import { Label } from '@/components/ui/label';
+import { Input } from '@/components/ui/input';
 
 interface AttendanceRecord {
   id: string;
@@ -41,17 +52,80 @@ const statusStyles = {
 
 export default function Attendance() {
   const { user } = useAuth();
+  const { toast } = useToast();
   const isHR = user?.role === 'hr';
   const [selectedMonth, setSelectedMonth] = useState('january');
+  const [isCheckedIn, setIsCheckedIn] = useState(false);
+  const [checkInTime, setCheckInTime] = useState<string | null>(null);
+  const [isManualEntryOpen, setIsManualEntryOpen] = useState(false);
 
   const myAttendance = attendanceRecords.filter(r => r.employee === 'John Smith');
   const displayRecords = isHR ? attendanceRecords : myAttendance;
+
+  const handleCheckIn = () => {
+    const now = new Date();
+    const timeString = now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+    setIsCheckedIn(true);
+    setCheckInTime(timeString);
+    toast({
+      title: 'Checked In Successfully',
+      description: `You checked in at ${timeString}`,
+    });
+  };
+
+  const handleCheckOut = () => {
+    const now = new Date();
+    const timeString = now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+    setIsCheckedIn(false);
+    setCheckInTime(null);
+    toast({
+      title: 'Checked Out Successfully',
+      description: `You checked out at ${timeString}`,
+    });
+  };
+
+  const handleManualEntry = () => {
+    setIsManualEntryOpen(false);
+    toast({
+      title: 'Attendance Recorded',
+      description: 'Manual attendance entry has been saved.',
+    });
+  };
 
   return (
     <DashboardLayout 
       title="Attendance" 
       subtitle={isHR ? "Track team attendance and work hours" : "View your attendance records"}
     >
+      {/* Check In/Out Section for Employees */}
+      {!isHR && (
+        <div className="bg-card rounded-xl border border-border p-6 mb-8">
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+            <div>
+              <h3 className="text-lg font-semibold">Today's Attendance</h3>
+              <p className="text-sm text-muted-foreground">
+                {isCheckedIn 
+                  ? `Checked in at ${checkInTime}` 
+                  : 'You have not checked in yet'}
+              </p>
+            </div>
+            <div className="flex gap-3">
+              {!isCheckedIn ? (
+                <Button onClick={handleCheckIn} className="gap-2">
+                  <LogIn className="h-4 w-4" />
+                  Check In
+                </Button>
+              ) : (
+                <Button onClick={handleCheckOut} variant="destructive" className="gap-2">
+                  <LogOut className="h-4 w-4" />
+                  Check Out
+                </Button>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Stats */}
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4 mb-8">
         <StatCard
@@ -111,7 +185,85 @@ export default function Attendance() {
             </Select>
           )}
         </div>
-        <Button variant="outline">Export Report</Button>
+        <div className="flex gap-2">
+          {isHR && (
+            <Dialog open={isManualEntryOpen} onOpenChange={setIsManualEntryOpen}>
+              <DialogTrigger asChild>
+                <Button variant="outline" className="gap-2">
+                  <UserPlus className="h-4 w-4" />
+                  Manual Entry
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="sm:max-w-md">
+                <DialogHeader>
+                  <DialogTitle>Manual Attendance Entry</DialogTitle>
+                  <DialogDescription>
+                    Record attendance manually in case of machine failure or other issues.
+                  </DialogDescription>
+                </DialogHeader>
+                <div className="grid gap-4 py-4">
+                  <div className="space-y-2">
+                    <Label>Employee</Label>
+                    <Select>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select employee" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="john">John Smith</SelectItem>
+                        <SelectItem value="emily">Emily Davis</SelectItem>
+                        <SelectItem value="michael">Michael Brown</SelectItem>
+                        <SelectItem value="sarah">Sarah Wilson</SelectItem>
+                        <SelectItem value="david">David Lee</SelectItem>
+                        <SelectItem value="jennifer">Jennifer Martinez</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Date</Label>
+                    <Input type="date" />
+                  </div>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label>Check In Time</Label>
+                      <Input type="time" />
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Check Out Time</Label>
+                      <Input type="time" />
+                    </div>
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Status</Label>
+                    <Select defaultValue="present">
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="present">Present</SelectItem>
+                        <SelectItem value="late">Late</SelectItem>
+                        <SelectItem value="half-day">Half Day</SelectItem>
+                        <SelectItem value="absent">Absent</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Reason (Optional)</Label>
+                    <Input placeholder="e.g., Machine failure, forgot to punch" />
+                  </div>
+                </div>
+                <div className="flex justify-end gap-3">
+                  <Button variant="outline" onClick={() => setIsManualEntryOpen(false)}>
+                    Cancel
+                  </Button>
+                  <Button onClick={handleManualEntry}>
+                    Save Entry
+                  </Button>
+                </div>
+              </DialogContent>
+            </Dialog>
+          )}
+          <Button variant="outline">Export Report</Button>
+        </div>
       </div>
 
       {/* Attendance Table */}
